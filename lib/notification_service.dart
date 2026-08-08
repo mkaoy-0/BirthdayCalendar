@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:flutter/widgets.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
@@ -7,7 +10,7 @@ class NotificationService {
       FlutterLocalNotificationsPlugin();
 
   /// 初期設定
-  static Future<void> init() async {
+  static Future<void> init({bool requestPermission = true}) async {
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
@@ -15,15 +18,26 @@ class NotificationService {
       android: initializationSettingsAndroid,
     );
 
+    WidgetsFlutterBinding.ensureInitialized();
+
     await _notificationsPlugin.initialize(initializationSettings);
-    
+
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Asia/Tokyo'));
+
+    if (requestPermission && Platform.isAndroid) {
+      final androidImplementation = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      final bool? grantedNotificationPermission =
+          await androidImplementation?.requestNotificationsPermission();
+      if (grantedNotificationPermission != true) {
+        debugPrint('通知権限が付与されませんでした。通知が届かない可能性があります。');
+      }
+    }
   }
 
   /// 💡 解説サイトのロジックを組み込んだ時間指定関数
   static Future<void> scheduleDailyNotification(String memoTitle, String memoText, int hour, int minute) async {
-    // 💡 予約する瞬間に、指定された時間の「次の出現タイミング」を正確に計算する
     final tz.TZDateTime scheduledDate = _nextInstanceOfTime(hour, minute);
 
     await _notificationsPlugin.zonedSchedule(
@@ -40,6 +54,7 @@ class NotificationService {
           priority: Priority.high,
         ),
       ),
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       uiLocalNotificationDateInterpretation:
           UILocalNotificationDateInterpretation.absoluteTime,
     );
@@ -61,12 +76,17 @@ class NotificationService {
     return scheduledDate;
   }
 
-  /// 即時通知用（5秒後テストで使ったものも一応残しておきます）
+  /// 即時通知用
   static Future<void> showMemoNotification(String memoText) async {
     const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
       'daily_memo_channel', '毎日のメモ通知',
       importance: Importance.max, priority: Priority.high,
     );
-    await _notificationsPlugin.show(1, '本日の予定・メモがあります', memoText, const NotificationDetails(android: androidDetails));
+    await _notificationsPlugin.show(
+      1,
+      null,
+      memoText,
+      const NotificationDetails(android: androidDetails),
+    );
   }
 }
