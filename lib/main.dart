@@ -844,19 +844,26 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
                                       tagController: tagController,
                                       tagFocusNode: tagFocusNode,
                                       onToggleEditing: () {
+                                        final wasEditing = showTagEditor;
                                         setState(() {
                                           showTagEditor = !showTagEditor;
                                           if (showTagEditor) {
                                             tagController.text =
                                                 dateTags[selectedKey] ??
                                                     '';
-                                            FocusScope.of(context)
-                                                .requestFocus(tagFocusNode);
-                                          } else {
-                                            FocusScope.of(context)
-                                                .unfocus();
                                           }
                                         });
+                                        if (!wasEditing && !showTagEditor) {
+                                          // no-op
+                                        }
+                                        if (showTagEditor) {
+                                          WidgetsBinding.instance
+                                              .addPostFrameCallback((_) {
+                                            tagFocusNode.requestFocus();
+                                          });
+                                        } else {
+                                          FocusScope.of(context).unfocus();
+                                        }
                                       },
                                       onTagChanged: (text) {
                                         _saveTag(

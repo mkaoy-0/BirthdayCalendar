@@ -24,18 +24,26 @@ class TagEditPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    double tagFontsize = 11.0;
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
+          height: 24,
           decoration: BoxDecoration(
-            color: colorScheme.primary,
+            color: colorScheme.secondary,
             borderRadius: BorderRadius.circular(6),
           ),
           child: IconButton(
+            constraints: const BoxConstraints(
+              minWidth: 24,
+              minHeight: 24,
+            ),
+            padding: const EdgeInsets.all(4),
+            iconSize: 15,
             icon: Icon(
               isEditing ? Icons.check : Icons.label,
-              color: colorScheme.onPrimary,
+              color: colorScheme.onSecondary,
             ),
             onPressed: onToggleEditing,
             tooltip: isEditing ? 'タグ編集を終了' : 'タグを編集',
@@ -44,46 +52,56 @@ class TagEditPanel extends StatelessWidget {
         if (isEditing) ...[
           const SizedBox(width: 8),
           Container(
-            constraints: const BoxConstraints(
-              minWidth: 48,
-              maxWidth: 240,
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            height: 24,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
             decoration: BoxDecoration(
-              color: colorScheme.primaryContainer,
+              color: colorScheme.secondaryContainer,
               borderRadius: BorderRadius.circular(8),
             ),
             child: IntrinsicWidth(
-              child: TextField(
-                controller: tagController,
-                focusNode: tagFocusNode,
-                autofocus: true,
-                cursorColor: colorScheme.onPrimary,
-                style: TextStyle(
-                  color: colorScheme.onPrimary,
-                  fontWeight: FontWeight.w500,
+              stepWidth: 1,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(
+                  minWidth: 12,
+                  maxWidth: 240,
                 ),
-                decoration: const InputDecoration.collapsed(
-                  hintText: '',
+                child: TextField(
+                  controller: tagController,
+                  focusNode: tagFocusNode,
+                  autofocus: true,
+                  cursorColor: colorScheme.onSecondaryContainer,
+                  style: TextStyle(
+                    color: colorScheme.onSecondaryContainer,
+                    fontWeight: FontWeight.w500,
+                    fontSize: tagFontsize,
+                  ),
+                  textAlignVertical: TextAlignVertical.center,
+                  decoration: const InputDecoration.collapsed(
+                    hintText: '',
+                  ),
+                  onChanged: onTagChanged,
+                  onSubmitted: (_) => onSubmit(),
                 ),
-                onChanged: onTagChanged,
-                onSubmitted: (_) => onSubmit(),
               ),
             ),
           ),
         ] else if (tagText.isNotEmpty) ...[
           const SizedBox(width: 8),
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            height: 24,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: colorScheme.primaryContainer,
+              color: colorScheme.secondary.withValues(alpha: 0.82),
               borderRadius: BorderRadius.circular(8),
             ),
-            child: Text(
-              tagText,
-              style: TextStyle(
-                color: colorScheme.onPrimary,
-                fontWeight: FontWeight.w500,
+            child: Center(
+              child: Text(
+                tagText,
+                style: TextStyle(
+                  color: colorScheme.onSecondary,
+                  fontWeight: FontWeight.w500,
+                  fontSize: tagFontsize,
+                ),
               ),
             ),
           ),
