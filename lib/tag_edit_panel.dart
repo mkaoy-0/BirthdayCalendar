@@ -11,6 +11,7 @@ class TagEditPanel extends StatelessWidget {
     required this.onToggleEditing,
     required this.onTagChanged,
     required this.onSubmit,
+    this.onTagTap,
   });
 
   final String tagText;
@@ -21,6 +22,7 @@ class TagEditPanel extends StatelessWidget {
   final VoidCallback onToggleEditing;
   final ValueChanged<String> onTagChanged;
   final VoidCallback onSubmit;
+  final ValueChanged<String>? onTagTap;
 
   @override
   Widget build(BuildContext context) {
@@ -88,20 +90,26 @@ class TagEditPanel extends StatelessWidget {
           ),
         ] else if (tagText.isNotEmpty) ...[
           const SizedBox(width: 8),
-          Container(
-            height: 24,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: colorScheme.tertiary.withValues(alpha: 0.82),
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Center(
-              child: Text(
-                tagText,
-                style: TextStyle(
-                  color: colorScheme.onTertiary,
-                  fontWeight: FontWeight.w500,
-                  fontSize: tagFontsize,
+          GestureDetector(
+            onTap: () {
+              if (onTagTap != null) onTagTap!(tagText);
+            },
+            behavior: HitTestBehavior.opaque,
+            child: Container(
+              height: 24,
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: colorScheme.tertiary.withValues(alpha: 0.82),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Center(
+                child: Text(
+                  tagText,
+                  style: TextStyle(
+                    color: colorScheme.onTertiary,
+                    fontWeight: FontWeight.w500,
+                    fontSize: tagFontsize,
+                  ),
                 ),
               ),
             ),
