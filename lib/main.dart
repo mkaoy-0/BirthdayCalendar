@@ -7,7 +7,8 @@ import 'package:async_wallpaper/async_wallpaper.dart'; // ★追加
 import 'package:workmanager/workmanager.dart'; // ★追加
 import 'package:dynamic_color/dynamic_color.dart'; // DynamicColorBuilderのエラーを消すお守り
 import 'theme_service.dart'; // 👈 ThemeServiceのエラーを消すお守り
-import 'notification_service.dart'; 
+import 'notification_service.dart';
+import 'search_menu_panel.dart';
 
 // ★裏方タスクの名前を定義
 const String wallpaperTaskName = "com.example.dailyWallpaperTask";
@@ -662,24 +663,12 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const SizedBox(height: 20),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                      child: TextButton(
-                        style: TextButton.styleFrom(
-                          backgroundColor: currentColors.onPrimary.withOpacity(0.12),
-                          foregroundColor: currentColors.onPrimary,
-                          padding: const EdgeInsets.symmetric(vertical: 16.0),
-                          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                        ),
-                        onPressed: () {
-                          _pickDefaultWallpaper();
-                        },
-                        child: Text(
-                          defaultImagePath.isNotEmpty
-                              ? 'デフォルト壁紙を変更'
-                              : 'デフォルト壁紙を設定',
-                        ),
+                    Expanded(
+                      child: MenuSearchPanel(
+                        defaultImagePath: defaultImagePath,
+                        onPickDefaultWallpaper: _pickDefaultWallpaper,
+                        dateMemos: dateMemos,
+                        colorScheme: currentColors,
                       ),
                     ),
                   ],
