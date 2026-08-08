@@ -31,7 +31,7 @@ void callbackDispatcher() {
     // もし最後に壁紙を変えた日が「今日」なら、もう0時の仕事は終わっているので何もせず終了する
     String? lastUpdated = prefs.getString(lastUpdatedKey);
     if (lastUpdated == key) {
-      return Future.value(true); 
+      return Future.value(true);
     }
 
     // ======= 💡ここから新設：毎朝のメモ通知処理 =======
@@ -45,7 +45,8 @@ void callbackDispatcher() {
       final int targetMinute = 0;
       final String formattedDate = '${now.month}/${now.day}';
       final String notificationText = '$formattedDateは$todayMemoの誕生日です！おめでとう🎉';
-      if (now.hour > targetHour || (now.hour == targetHour && now.minute >= targetMinute)) {
+      if (now.hour > targetHour ||
+          (now.hour == targetHour && now.minute >= targetMinute)) {
         await NotificationService.showMemoNotification(notificationText);
       } else {
         await NotificationService.scheduleDailyNotification(
@@ -79,7 +80,6 @@ void callbackDispatcher() {
 
         // 壁紙の変更に成功したら、「今日の日付」をスタンプとしてスマホに保存する
         await prefs.setString(lastUpdatedKey, key);
-
       } catch (e) {
         debugPrint("壁紙の自動変更に失敗しました: $e");
       }
@@ -103,7 +103,8 @@ void main() async {
     "1",
     wallpaperTaskName,
     frequency: const Duration(minutes: 15), // 15分ごとに今日用の画像がないか裏でチェックしに行く
-    existingWorkPolicy: ExistingPeriodicWorkPolicy.update, // すでに同じタスクがあるときは上書きする
+    existingWorkPolicy:
+        ExistingPeriodicWorkPolicy.update, // すでに同じタスクがあるときは上書きする
   );
 
   runApp(const MyApp());
@@ -118,7 +119,9 @@ class MyApp extends StatelessWidget {
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         // 別スクリプト（ThemeService）に本物の壁紙色（lightDynamic）を渡して、カラースキームを作ってもらう
-        final ColorScheme lightColorScheme = ThemeService.createLightScheme(lightDynamic);
+        final ColorScheme lightColorScheme = ThemeService.createLightScheme(
+          lightDynamic,
+        );
 
         return MaterialApp(
           title: 'Birthday Calendar',
@@ -141,7 +144,9 @@ class WallpaperCalendarPage extends StatefulWidget {
 }
 
 class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
-  late final PageController _pageController = PageController(initialPage: 1200 + currentMonth - 1);
+  late final PageController _pageController = PageController(
+    initialPage: 1200 + currentMonth - 1,
+  );
   int currentMonth = DateTime.now().month; // 初期表示を「現在の月」にするように進化！
 
   // 各月が何日まであるかのデータ（うるう年は一旦無視して2月は28日）
@@ -336,8 +341,12 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
     final theme = Theme.of(context);
     final currentColors = theme.colorScheme;
 
-    String selectedKey = selectedDay != null ? '$currentMonth-$selectedDay' : '';
-    bool hasImage = selectedImages[selectedKey] != null && selectedImages[selectedKey]!.isNotEmpty;
+    String selectedKey = selectedDay != null
+        ? '$currentMonth-$selectedDay'
+        : '';
+    bool hasImage =
+        selectedImages[selectedKey] != null &&
+        selectedImages[selectedKey]!.isNotEmpty;
     final double menuHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
@@ -346,7 +355,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
           'Birthday Calendar',
           style: TextStyle(
             color: currentColors.onPrimary, // タイトルの文字色も壁紙に合わせて変化させる
-            fontFamily: 'fantasy',       
+            fontFamily: 'fantasy',
             fontWeight: FontWeight.w500, // ほんの少しだけ線を細くして上品に（お好みで太くもできます）
           ),
         ),
@@ -411,240 +420,387 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
                       ),
                     ],
                   ),
-                ), 
+                ),
 
                 // 【2】日付の一覧エリア ＋ 【3】スマート操作エリア
                 Expanded(
-                  child: SingleChildScrollView(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          height: (MediaQuery.of(context).size.width - 32) / 7 / 0.55 * 5.1,
-                          child: PageView.builder(
-                            // 💡 上で定義したコントローラーをここにセット！
-                            controller: _pageController,
-                            // 💡 itemCountをあえて指定しないことで無限スワイプを可能にします
-                            onPageChanged: (index) {
-                              setState(() {
-                                // 💡 インデックスから「1〜12月」のどれに該当するかを計算
-                                currentMonth = (index % 12) + 1;
-                                selectedDay = null;
-                                showTextField = false;
-                              });
-                            },
-                            itemBuilder: (context, pageIndex) {
-                              // 現在のページが「何月」にあたるかを計算
-                              int monthForPage = (pageIndex % 12) + 1;
-                              int maxDaysForPage = daysInMonth[monthForPage] ?? 30;
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.translucent,
+                    onTap: () => FocusScope.of(context).unfocus(),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            height:
+                                (MediaQuery.of(context).size.width - 32) /
+                                7 /
+                                0.55 *
+                                5.1,
+                            child: PageView.builder(
+                              // 💡 上で定義したコントローラーをここにセット！
+                              controller: _pageController,
+                              // 💡 itemCountをあえて指定しないことで無限スワイプを可能にします
+                              onPageChanged: (index) {
+                                setState(() {
+                                  // 💡 インデックスから「1〜12月」のどれに該当するかを計算
+                                  currentMonth = (index % 12) + 1;
+                                  selectedDay = null;
+                                  showTextField = false;
+                                });
+                              },
+                              itemBuilder: (context, pageIndex) {
+                                // 現在のページが「何月」にあたるかを計算
+                                int monthForPage = (pageIndex % 12) + 1;
+                                int maxDaysForPage =
+                                    daysInMonth[monthForPage] ?? 30;
 
-                              return GridView.builder(
-                                shrinkWrap: true,
-                                padding: EdgeInsets.zero,
-                                physics: const NeverScrollableScrollPhysics(),
-                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                                  crossAxisCount: 7,
-                                  mainAxisSpacing: 10.0,
-                                  crossAxisSpacing: 4.0,
-                                  childAspectRatio: 0.55,
-                                ),
-                                itemCount: 35,
-                                itemBuilder: (context, index) {
-                                  int dayNumber = index + 1;
-
-                                  if (dayNumber > maxDaysForPage) {
-                                    return Container(
-                                      decoration: BoxDecoration(
-                                        color: const Color.fromARGB(255, 232, 232, 232),
-                                        borderRadius: BorderRadius.circular(1),
+                                return GridView.builder(
+                                  shrinkWrap: true,
+                                  padding: EdgeInsets.zero,
+                                  physics: const NeverScrollableScrollPhysics(),
+                                  gridDelegate:
+                                      const SliverGridDelegateWithFixedCrossAxisCount(
+                                        crossAxisCount: 7,
+                                        mainAxisSpacing: 10.0,
+                                        crossAxisSpacing: 4.0,
+                                        childAspectRatio: 0.55,
                                       ),
-                                    );
-                                  }
+                                  itemCount: 35,
+                                  itemBuilder: (context, index) {
+                                    int dayNumber = index + 1;
 
-                                  String key = '$monthForPage-$dayNumber';
-                                  String? imagePath = selectedImages[key];
+                                    if (dayNumber > maxDaysForPage) {
+                                      return Container(
+                                        decoration: BoxDecoration(
+                                          color: const Color.fromARGB(
+                                            255,
+                                            232,
+                                            232,
+                                            232,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            1,
+                                          ),
+                                        ),
+                                      );
+                                    }
 
-                                  bool isToday = now.month == monthForPage && now.day == dayNumber;
-                                  bool isSelected = selectedDay == dayNumber && currentMonth == monthForPage;
+                                    String key = '$monthForPage-$dayNumber';
+                                    String? imagePath = selectedImages[key];
 
-                                  return InkWell(
-                                    onTap: () {
-                                      setState(() {
-                                        if (selectedDay == dayNumber) {
-                                          selectedDay = null;
-                                          showTextField = false;
-                                        } else {
-                                          selectedDay = dayNumber;
-                                          showTextField = false;
-                                          textController.text = dateMemos[key] ?? '';
-                                        }
-                                      });
-                                    },
-                                    child: Container(
-                                      decoration: BoxDecoration(
-                                        border: Border.all(
-                                         // color: const Color.fromARGB(255, 0, 0, 0),
-                                         color: isToday
+                                    bool isToday =
+                                        now.month == monthForPage &&
+                                        now.day == dayNumber;
+                                    bool isSelected =
+                                        selectedDay == dayNumber &&
+                                        currentMonth == monthForPage;
+
+                                    return InkWell(
+                                      onTap: () {
+                                        setState(() {
+                                          if (selectedDay == dayNumber) {
+                                            selectedDay = null;
+                                            showTextField = false;
+                                          } else {
+                                            selectedDay = dayNumber;
+                                            showTextField = false;
+                                            textController.text =
+                                                dateMemos[key] ?? '';
+                                          }
+                                        });
+                                      },
+                                      child: Container(
+                                        decoration: BoxDecoration(
+                                          border: Border.all(
+                                            // color: const Color.fromARGB(255, 0, 0, 0),
+                                            color: isToday
                                                 ? currentColors.error
                                                 : Colors.black,
-                                          width: isToday ? 3.0 : 0.45,
+                                            width: isToday ? 3.0 : 0.45,
+                                          ),
+                                          borderRadius: BorderRadius.circular(
+                                            1,
+                                          ),
+                                          color:
+                                              imagePath == null ||
+                                                  imagePath.isEmpty
+                                              ? const Color.fromARGB(
+                                                  0,
+                                                  205,
+                                                  205,
+                                                  205,
+                                                )
+                                              : null,
+                                          image:
+                                              imagePath != null &&
+                                                  imagePath.isNotEmpty
+                                              ? DecorationImage(
+                                                  image: FileImage(
+                                                    File(imagePath),
+                                                  ),
+                                                  fit: BoxFit.cover,
+                                                  colorFilter: ColorFilter.mode(
+                                                    Colors.black.withValues(
+                                                      alpha: 0.4,
+                                                    ),
+                                                    BlendMode.srcATop,
+                                                  ),
+                                                )
+                                              : null,
                                         ),
-                                        borderRadius: BorderRadius.circular(1),
-                                        color: imagePath == null || imagePath.isEmpty
-                                            ? const Color.fromARGB(0, 205, 205, 205)
-                                            : null,
-                                        image: imagePath != null && imagePath.isNotEmpty 
-                                            ? DecorationImage(
-                                                image: FileImage(File(imagePath)),
-                                                fit: BoxFit.cover,
-                                                colorFilter: ColorFilter.mode(
-                                                  Colors.black.withValues(alpha: 0.4),
-                                                  BlendMode.srcATop,
-                                                ),
-                                              )
-                                            : null,
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          dayNumber.toString().padLeft(2, '0'),
-                                          style: TextStyle(
-                                            fontSize: isSelected ? 18 : 12,
-                                            fontStyle: FontStyle.italic,
-                                            fontFamily: 'Times New Roman',
-                                            color: imagePath == null || imagePath.isEmpty
-                                                    ? Colors.black
-                                                    : Colors.white,
-                                            shadows: imagePath != null && imagePath.isNotEmpty
-                                                ? const [Shadow(color: Colors.black, blurRadius: 4)]
-                                                : null,
+                                        child: Center(
+                                          child: Text(
+                                            dayNumber.toString().padLeft(
+                                              2,
+                                              '0',
+                                            ),
+                                            style: TextStyle(
+                                              fontSize: isSelected ? 18 : 12,
+                                              fontStyle: FontStyle.italic,
+                                              fontFamily: 'Times New Roman',
+                                              color:
+                                                  imagePath == null ||
+                                                      imagePath.isEmpty
+                                                  ? Colors.black
+                                                  : Colors.white,
+                                              shadows:
+                                                  imagePath != null &&
+                                                      imagePath.isNotEmpty
+                                                  ? const [
+                                                      Shadow(
+                                                        color: Colors.black,
+                                                        blurRadius: 4,
+                                                      ),
+                                                    ]
+                                                  : null,
+                                            ),
                                           ),
                                         ),
                                       ),
-                                    ),
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                        ),
-                        
-                        if (selectedDay != null) ...[
-                          const SizedBox(height: 10),
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 0.0),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-                                  decoration: BoxDecoration(
-                                    color: const Color.fromARGB(0, 250, 250, 250),
-                                    border: Border.all(
-                                      color: const Color.fromARGB(255, 52, 52, 52),
-                                      width: 0.6,
-                                    ),
-                                    borderRadius: BorderRadius.circular(1),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.edit,
-                                          color: showTextField ? currentColors.primary : Colors.grey[700],
-                                        ),
-                                        onPressed: () {
-                                          setState(() {
-                                            showTextField = !showTextField;
-                                          });
-                                        },
-                                      ),
-                                      IconButton(
-                                        icon: Icon(Icons.image, color: Colors.grey[700]),
-                                        onPressed: () => _updateImage(currentMonth, selectedDay!),
-                                      ),
-                                      IconButton(
-                                        icon: Icon(
-                                          Icons.delete, 
-                                          color: hasImage ? currentColors.error : Colors.grey[300],
-                                        ),
-                                        onPressed: hasImage ? () => _deleteImage(currentMonth, selectedDay!) : null,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                
-                                Padding(
-                                  padding: const EdgeInsets.only(right: 4.0),
-                                  child: Text(
-                                    '${currentMonth.toString().padLeft(2, '0')}${selectedDay!.toString().padLeft(2, '0')}', 
-                                    style: TextStyle(
-                                      fontSize: 22,
-                                      fontWeight: FontWeight.bold,
-                                      fontStyle: FontStyle.italic,
-                                      fontFamily: 'Times New Roman',
-                                      color: const Color.fromARGB(255, 82, 82, 82),
-                                    ),
-                                  ),
-                                ),
-                              ],
+                                    );
+                                  },
+                                );
+                              },
                             ),
                           ),
 
-                          if (showTextField)
+                          if (selectedDay != null) ...[
+                            const SizedBox(height: 10),
                             Padding(
-                              padding: const EdgeInsets.only(bottom: 8.0, left: 4.0, right: 4.0),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 0.0,
+                              ),
                               child: Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Expanded(
-                                    child: TextField(
-                                      controller: textController,
-                                      autofocus: true,
-                                      style: const TextStyle(fontFamily: 'serif', fontSize: 16),
-                                      decoration: const InputDecoration(
-                                        hintText: 'メモを入力',
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                                        border: UnderlineInputBorder(),
-                                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-                                        focusedBorder: UnderlineInputBorder(
-                                          borderSide: BorderSide(color: Color.fromARGB(255, 117, 117, 117), width: 1.5),
-                                        ),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8.0,
+                                      vertical: 2.0,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: const Color.fromARGB(
+                                        0,
+                                        250,
+                                        250,
+                                        250,
                                       ),
-                                      onChanged: (text) => _saveMemo(currentMonth, selectedDay!, text),
+                                      border: Border.all(
+                                        color: const Color.fromARGB(
+                                          255,
+                                          52,
+                                          52,
+                                          52,
+                                        ),
+                                        width: 0.6,
+                                      ),
+                                      borderRadius: BorderRadius.circular(1),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.edit,
+                                            color: showTextField
+                                                ? currentColors.primary
+                                                : Colors.grey[700],
+                                          ),
+                                          onPressed: () {
+                                            setState(() {
+                                              showTextField = !showTextField;
+                                              if (showTextField) {
+                                                textController.text =
+                                                    dateMemos[selectedKey] ??
+                                                    '';
+                                              }
+                                            });
+                                          },
+                                        ),
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.image,
+                                            color: Colors.grey[700],
+                                          ),
+                                          onPressed: () => _updateImage(
+                                            currentMonth,
+                                            selectedDay!,
+                                          ),
+                                        ),
+                                        IconButton(
+                                          icon: Icon(
+                                            Icons.delete,
+                                            color: hasImage
+                                                ? currentColors.error
+                                                : Colors.grey[300],
+                                          ),
+                                          onPressed: hasImage
+                                              ? () => _deleteImage(
+                                                  currentMonth,
+                                                  selectedDay!,
+                                                )
+                                              : null,
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(width: 8),
-                                  IconButton(
-                                    icon: const Icon(Icons.check, color: Color.fromARGB(255, 111, 111, 111)),
-                                    onPressed: () {
-                                      setState(() {
-                                        showTextField = false;
-                                      });
-                                    },
+
+                                  Padding(
+                                    padding: const EdgeInsets.only(right: 4.0),
+                                    child: Text(
+                                      '${currentMonth.toString().padLeft(2, '0')}${selectedDay!.toString().padLeft(2, '0')}',
+                                      style: TextStyle(
+                                        fontSize: 22,
+                                        fontWeight: FontWeight.bold,
+                                        fontStyle: FontStyle.italic,
+                                        fontFamily: 'Times New Roman',
+                                        color: const Color.fromARGB(
+                                          255,
+                                          82,
+                                          82,
+                                          82,
+                                        ),
+                                      ),
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
 
-                          if (dateMemos['$currentMonth-$selectedDay'] != null && dateMemos['$currentMonth-$selectedDay']!.isNotEmpty)
-                            Align(
-                              alignment: Alignment.centerLeft,
-                              child: Padding(
-                                padding: const EdgeInsets.only(top: 10.0, bottom: 16.0, left: 4.0),
-                                child: Text(
-                                  dateMemos['$currentMonth-$selectedDay']!,
-                                  style: TextStyle(
-                                    fontSize: 15,
-                                    fontFamily: 'serif',
-                                    color: Colors.grey.shade700,
-                                    fontWeight: FontWeight.bold,
+                            if (showTextField)
+                              Padding(
+                                padding: const EdgeInsets.only(
+                                  bottom: 8.0,
+                                  left: 4.0,
+                                  right: 4.0,
+                                ),
+                                child: Row(
+                                  children: [
+                                    Expanded(
+                                      child: TextField(
+                                        controller: textController,
+                                        autofocus: true,
+                                        style: const TextStyle(
+                                          fontFamily: 'serif',
+                                          fontSize: 16,
+                                        ),
+                                        decoration: const InputDecoration(
+                                          hintText: 'メモを入力',
+                                          isDense: true,
+                                          contentPadding: EdgeInsets.symmetric(
+                                            horizontal: 4,
+                                            vertical: 8,
+                                          ),
+                                          border: UnderlineInputBorder(),
+                                          enabledBorder: UnderlineInputBorder(
+                                            borderSide: BorderSide(
+                                              color: Colors.grey,
+                                            ),
+                                          ),
+                                          focusedBorder: UnderlineInputBorder(
+                                            borderSide: BorderSide(
+                                              color: Color.fromARGB(
+                                                255,
+                                                117,
+                                                117,
+                                                117,
+                                              ),
+                                              width: 1.5,
+                                            ),
+                                          ),
+                                        ),
+                                        onChanged: (text) => _saveMemo(
+                                          currentMonth,
+                                          selectedDay!,
+                                          text,
+                                        ),
+                                        onSubmitted: (text) {
+                                          _saveMemo(
+                                            currentMonth,
+                                            selectedDay!,
+                                            text,
+                                          );
+                                          setState(() {
+                                            showTextField = false;
+                                          });
+                                        },
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    IconButton(
+                                      icon: const Icon(
+                                        Icons.check,
+                                        color: Color.fromARGB(
+                                          255,
+                                          111,
+                                          111,
+                                          111,
+                                        ),
+                                      ),
+                                      onPressed: () async {
+                                        await _saveMemo(
+                                          currentMonth,
+                                          selectedDay!,
+                                          textController.text,
+                                        );
+                                        setState(() {
+                                          showTextField = false;
+                                        });
+                                      },
+                                    ),
+                                  ],
+                                ),
+                              ),
+
+                            if (!showTextField &&
+                                dateMemos['$currentMonth-$selectedDay'] !=
+                                    null &&
+                                dateMemos['$currentMonth-$selectedDay']!
+                                    .isNotEmpty)
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: Padding(
+                                  padding: const EdgeInsets.only(
+                                    top: 10.0,
+                                    bottom: 16.0,
+                                    left: 4.0,
+                                  ),
+                                  child: Text(
+                                    dateMemos['$currentMonth-$selectedDay']!,
+                                    style: TextStyle(
+                                      fontSize: 15,
+                                      fontFamily: 'serif',
+                                      color: Colors.grey.shade700,
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ),
                               ),
-                            ),
+                          ],
                         ],
-                      ],
+                      ),
                     ),
                   ),
                 ),
