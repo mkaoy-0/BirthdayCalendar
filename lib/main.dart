@@ -581,12 +581,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                     if (dayNumber > maxDaysForPage) {
                                       return Container(
                                         decoration: BoxDecoration(
-                                          color: const Color.fromARGB(
-                                            255,
-                                            232,
-                                            232,
-                                            232,
-                                          ),
+                                          color: currentColors.surfaceVariant,
                                           borderRadius: BorderRadius.circular(
                                             1,
                                           ),
@@ -603,6 +598,11 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                     bool isSelected =
                                         selectedDay == dayNumber &&
                                         currentMonth == monthForPage;
+
+                                    // 1. 写真があるかどうかを事前に判定（判定処理の重複を減らしてスッキリさせます）
+                                    final hasImage =
+                                        imagePath != null &&
+                                        imagePath.isNotEmpty;
 
                                     return InkWell(
                                       onTap: () {
@@ -621,31 +621,21 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                           }
                                         });
                                       },
+
                                       child: Container(
                                         decoration: BoxDecoration(
                                           border: Border.all(
                                             // color: const Color.fromARGB(255, 0, 0, 0),
-                                            color: isToday
-                                                ? currentColors.error
-                                                : Colors.black,
-                                            width: isToday ? 3.0 : 0.45,
+                                            color: currentColors.onSurface,
+                                            width: 0.45,
                                           ),
                                           borderRadius: BorderRadius.circular(
                                             1,
                                           ),
-                                          color:
-                                              imagePath == null ||
-                                                  imagePath.isEmpty
-                                              ? const Color.fromARGB(
-                                                  0,
-                                                  205,
-                                                  205,
-                                                  205,
-                                                )
+                                          color: hasImage
+                                              ? currentColors.surface
                                               : null,
-                                          image:
-                                              imagePath != null &&
-                                                  imagePath.isNotEmpty
+                                          image: hasImage
                                               ? DecorationImage(
                                                   image: FileImage(
                                                     File(imagePath),
@@ -660,31 +650,44 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                                 )
                                               : null,
                                         ),
+
                                         child: Center(
-                                          child: Text(
-                                            dayNumber.toString().padLeft(
-                                              2,
-                                              '0',
-                                            ),
-                                            style: TextStyle(
-                                              fontSize: isSelected ? 18 : 12,
-                                              fontStyle: FontStyle.italic,
-                                              fontFamily: 'Times New Roman',
-                                              color:
-                                                  imagePath == null ||
-                                                      imagePath.isEmpty
-                                                  ? Colors.black
-                                                  : Colors.white,
-                                              shadows:
-                                                  imagePath != null &&
-                                                      imagePath.isNotEmpty
-                                                  ? const [
-                                                      Shadow(
-                                                        color: Colors.black,
-                                                        blurRadius: 4,
-                                                      ),
-                                                    ]
-                                                  : null,
+                                          child: Container(
+                                            width: isToday
+                                                ? (isSelected ? 42.0 : 32.0)
+                                                : null,
+                                            height: isToday
+                                                ? (isSelected ? 42.0 : 32.0)
+                                                : null,
+                                            alignment: Alignment.center,
+                                            decoration: isToday
+                                                ? BoxDecoration(
+                                                    color:
+                                                        currentColors.inversePrimary.withValues(alpha: 0.84),
+                                                    shape: BoxShape.circle,
+                                                  )
+                                                : null,
+                                            child: Text(
+                                              dayNumber.toString().padLeft(
+                                                2,
+                                                '0',
+                                              ),
+                                              style: TextStyle(
+                                                fontSize: isSelected ? 19 : 13,
+                                                fontStyle: FontStyle.italic,
+                                                fontFamily: 'Times New Roman',
+                                                color: isToday
+                                                    ? currentColors.onPrimary
+                                                    : (hasImage ? Colors.white : currentColors.onSurface),
+                                                shadows: hasImage
+                                                    ? const [
+                                                        Shadow(
+                                                          color: Colors.black,
+                                                          blurRadius: 4,
+                                                        ),
+                                                      ]
+                                                    : null,
+                                              ),
                                             ),
                                           ),
                                         ),
@@ -712,19 +715,9 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                       vertical: 2.0,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color.fromARGB(
-                                        0,
-                                        250,
-                                        250,
-                                        250,
-                                      ),
+                                      color: currentColors.surface,
                                       border: Border.all(
-                                        color: const Color.fromARGB(
-                                          255,
-                                          52,
-                                          52,
-                                          52,
-                                        ),
+                                        color: currentColors.onSurface,
                                         width: 0.6,
                                       ),
                                       borderRadius: BorderRadius.circular(1),
@@ -737,7 +730,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                             Icons.edit,
                                             color: showTextField
                                                 ? currentColors.primary
-                                                : Colors.grey[700],
+                                                : currentColors.secondary,
                                           ),
                                           onPressed: () {
                                             setState(() {
@@ -753,7 +746,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                         IconButton(
                                           icon: Icon(
                                             Icons.image,
-                                            color: Colors.grey[700],
+                                            color: currentColors.secondary,
                                           ),
                                           onPressed: () => _updateImage(
                                             currentMonth,
@@ -765,7 +758,8 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                             Icons.delete,
                                             color: hasImage
                                                 ? currentColors.error
-                                                : Colors.grey[300],
+                                                      .withValues(alpha: 0.8)
+                                                : currentColors.surfaceVariant,
                                           ),
                                           onPressed: hasImage
                                               ? () => _deleteImage(
@@ -787,12 +781,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                         fontWeight: FontWeight.bold,
                                         fontStyle: FontStyle.italic,
                                         fontFamily: 'Times New Roman',
-                                        color: const Color.fromARGB(
-                                          255,
-                                          82,
-                                          82,
-                                          82,
-                                        ),
+                                        color: currentColors.primary,
                                       ),
                                     ),
                                   ),
@@ -814,10 +803,10 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                         controller: textController,
                                         autofocus: true,
                                         style: const TextStyle(
-                                          fontFamily: 'serif',
+                                          fontFamily: 'roboto',
                                           fontSize: 16,
                                         ),
-                                        decoration: const InputDecoration(
+                                        decoration: InputDecoration(
                                           hintText: 'メモを入力',
                                           isDense: true,
                                           contentPadding: EdgeInsets.symmetric(
@@ -827,17 +816,12 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                           border: UnderlineInputBorder(),
                                           enabledBorder: UnderlineInputBorder(
                                             borderSide: BorderSide(
-                                              color: Colors.grey,
+                                              color: currentColors.outline,
                                             ),
                                           ),
                                           focusedBorder: UnderlineInputBorder(
                                             borderSide: BorderSide(
-                                              color: Color.fromARGB(
-                                                255,
-                                                117,
-                                                117,
-                                                117,
-                                              ),
+                                              color: currentColors.outline,
                                               width: 1.5,
                                             ),
                                           ),
@@ -861,14 +845,9 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                     ),
                                     const SizedBox(width: 8),
                                     IconButton(
-                                      icon: const Icon(
+                                      icon: Icon(
                                         Icons.check,
-                                        color: Color.fromARGB(
-                                          255,
-                                          111,
-                                          111,
-                                          111,
-                                        ),
+                                        color: currentColors.primary,
                                       ),
                                       onPressed: () async {
                                         await _saveMemo(
@@ -905,7 +884,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                         style: TextStyle(
                                           fontSize: 15,
                                           fontFamily: 'serif',
-                                          color: Colors.grey.shade700,
+                                          color: currentColors.onSurfaceVariant,
                                           fontWeight: FontWeight.bold,
                                         ),
                                       ),

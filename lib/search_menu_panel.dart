@@ -93,20 +93,20 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: TextButton.icon(
-              icon: Icon(Icons.image, color: widget.colorScheme.onPrimary),
+              icon: Icon(Icons.image, color: widget.colorScheme.onPrimaryContainer.withValues(alpha: 0.75)),
               label: Text(
                 widget.defaultImagePath.isNotEmpty
                     ? 'デフォルト壁紙を変更'
                     : 'デフォルト壁紙を設定',
                 style: const TextStyle(
                   fontFamily: 'Roboto',
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
               style: TextButton.styleFrom(
-                backgroundColor: widget.colorScheme.onPrimary.withOpacity(0.12),
-                foregroundColor: widget.colorScheme.onPrimary,
+                backgroundColor: widget.colorScheme.primaryContainer.withValues(alpha: 0.8),
+                foregroundColor: widget.colorScheme.onPrimaryContainer.withValues(alpha: 0.75),
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
@@ -124,7 +124,7 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
               style: TextStyle(
                 color: widget.colorScheme.onPrimary,
                 fontFamily: 'OpenSans',
-                fontSize: 16,
+                fontSize: 15,
               ),
               decoration: InputDecoration(
                 hintText: '検索キーワードを入力',

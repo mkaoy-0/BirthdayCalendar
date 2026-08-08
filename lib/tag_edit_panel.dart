@@ -102,7 +102,7 @@ class TagEditPanel extends StatelessWidget {
           decoration: BoxDecoration(
             color: isEditing
                 ? colorScheme.tertiaryContainer
-                : colorScheme.primary,
+                : colorScheme.primary.withValues(alpha: 0.85),
             borderRadius: BorderRadius.circular(6),
           ),
           child: IconButton(
@@ -112,7 +112,7 @@ class TagEditPanel extends StatelessWidget {
             icon: Icon(
               isEditing ? Icons.check : Icons.label,
               color: isEditing
-                  ? colorScheme.onTertiaryContainer
+                  ? colorScheme.onTertiaryContainer.withValues(alpha: 0.6)
                   : colorScheme.onPrimary,
             ),
             onPressed: onToggleEditing,
@@ -123,7 +123,7 @@ class TagEditPanel extends StatelessWidget {
         Expanded(
           child: isEditing
               ? SizedBox(
-                  height: 40,
+                  height: 30,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
@@ -135,9 +135,9 @@ class TagEditPanel extends StatelessWidget {
                   ),
                 )
               : tags.isEmpty
-              ? const SizedBox(height: 40)
+              ? const SizedBox(height: 30)
               : SizedBox(
-                  height: 40,
+                  height: 30,
                   child: SingleChildScrollView(
                     scrollDirection: Axis.horizontal,
                     child: Row(
