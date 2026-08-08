@@ -16,6 +16,9 @@ const String defaultWallpaperKey = "default_wallpaper_path"; // ★デフォル�
 @pragma('vm:entry-point') // 必須：裏で動くコードであることをFlutterに示すお守り
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
+    WidgetsFlutterBinding.ensureInitialized();
+    await NotificationService.init(requestPermission: false);
+
     // 1. 現在の「月」と「日」を取得
     final now = DateTime.now();
     String key = "${now.month}-${now.day}";
@@ -35,14 +38,22 @@ void callbackDispatcher() {
     String memoKey = "memo_$key";
     String? todayMemo = prefs.getString(memoKey);
 
-    // もし今日の日付にメモが書かれていたら、通知を送信する！
+    // もし今日の日付にメモが書かれていたら、通知を送信する
     if (todayMemo != null && todayMemo.isNotEmpty) {
-      await NotificationService.scheduleDailyNotification(
-        "HAPPY BIRTHDAY🎉", 
-        "今日は$todayMemoの誕生日です！おめでとう🎉",
-        7,
-        0,
-      );
+      final int targetHour = 0;
+      final int targetMinute = 0;
+      final String formattedDate = '${now.month}/${now.day}';
+      final String notificationText = '$formattedDateは$todayMemoの誕生日です！おめでとう🎉';
+      if (now.hour > targetHour || (now.hour == targetHour && now.minute >= targetMinute)) {
+        await NotificationService.showMemoNotification(notificationText);
+      } else {
+        await NotificationService.scheduleDailyNotification(
+          'HAPPY BIRTHDAY🎉',
+          notificationText,
+          targetHour,
+          targetMinute,
+        );
+      }
     }
     // ================================================
 
@@ -314,6 +325,40 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
     }
   }
 
+  Future<void> _applyTomorrowWallpaperTest() async {
+    final now = DateTime.now();
+    final tomorrow = now.add(const Duration(days: 1));
+    final String tomorrowKey = '${tomorrow.month}-${tomorrow.day}';
+    final prefs = await SharedPreferences.getInstance();
+    final String? tomorrowPath = prefs.getString(tomorrowKey);
+
+    if (tomorrowPath == null || tomorrowPath.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('明日(${tomorrow.month}/${tomorrow.day})の壁紙が登録されていません。')),
+      );
+      return;
+    }
+
+    try {
+      await AsyncWallpaper.setWallpaper(
+        WallpaperRequest(
+          target: WallpaperTarget.home,
+          sourceType: WallpaperSourceType.file,
+          source: tomorrowPath,
+          goToHome: false,
+        ),
+      );
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('明日(${tomorrow.month}/${tomorrow.day})の壁紙を設定しました。')),
+      );
+    } catch (e) {
+      debugPrint('翌日の壁紙テストに失敗しました: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('翌日の壁紙設定に失敗しました。')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -344,6 +389,14 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
             ),
             tooltip: 'デフォルト壁紙を設定',
             onPressed: _pickDefaultWallpaper,
+          ),
+          IconButton(
+            icon: Icon(
+              Icons.skip_next,
+              color: currentColors.onPrimary,
+            ),
+            tooltip: '翌日の壁紙をテスト設定',
+            onPressed: _applyTomorrowWallpaperTest,
           ),
         ],
       ),
