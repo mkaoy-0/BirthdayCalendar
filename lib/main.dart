@@ -10,6 +10,7 @@ import 'theme_service.dart'; // 👈 ThemeServiceのエラーを消すお守り
 import 'notification_service.dart';
 import 'search_menu_panel.dart';
 import 'tag_edit_panel.dart';
+import 'tag_search_panel.dart';
 
 // ★裏方タスクの名前を定義
 const String wallpaperTaskName = "com.example.dailyWallpaperTask";
@@ -176,6 +177,8 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
   // ★追加：テキスト入力欄を表示するかどうかのフラグ
   bool showTextField = false;
   bool showTagEditor = false;
+  bool showTagSearch = false;
+  String? searchTag;
   // ★追加：右側から出るメニューを開閉するフラグ
   bool _isMenuOpen = false;
 
@@ -872,6 +875,12 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
                                           text,
                                         );
                                       },
+                                      onTagTap: (tag) {
+                                        setState(() {
+                                          showTagSearch = true;
+                                          searchTag = tag;
+                                        });
+                                      },
                                       onSubmit: () async {
                                         await _saveTag(
                                           currentMonth,
@@ -922,6 +931,24 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
               ),
             ),
           ),
+          if (showTagSearch && searchTag != null) ...[
+            ModalBarrier(
+              dismissible: false,
+              color: Colors.black54,
+            ),
+            TagSearchPanel(
+              tag: searchTag!,
+              dateTags: dateTags,
+              dateMemos: dateMemos,
+              onClose: () {
+                setState(() {
+                  showTagSearch = false;
+                  searchTag = null;
+                });
+              },
+              colorScheme: currentColors,
+            ),
+          ],
         ],
       ),
     );
