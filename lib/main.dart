@@ -337,7 +337,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
 
     String selectedKey = selectedDay != null ? '$currentMonth-$selectedDay' : '';
     bool hasImage = selectedImages[selectedKey] != null && selectedImages[selectedKey]!.isNotEmpty;
-    final double menuWidth = MediaQuery.of(context).size.width * 0.85;
+    final double menuHeight = MediaQuery.of(context).size.height;
 
     return Scaffold(
       appBar: AppBar(
@@ -353,13 +353,13 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
         actions: [
           IconButton(
             icon: Icon(
-              Icons.menu,
+              _isMenuOpen ? Icons.close : Icons.menu,
               color: currentColors.onPrimary,
             ),
             tooltip: 'メニュー',
             onPressed: () {
               setState(() {
-                _isMenuOpen = true;
+                _isMenuOpen = !_isMenuOpen;
               });
             },
           ),
@@ -652,39 +652,23 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
           AnimatedPositioned(
             duration: const Duration(milliseconds: 250),
             curve: Curves.easeOutCubic,
-            top: 0,
-            bottom: 0,
-            right: _isMenuOpen ? 0 : -menuWidth,
-            width: menuWidth,
+            left: 0,
+            right: 0,
+            top: _isMenuOpen ? 0 : -menuHeight,
+            height: menuHeight,
             child: Material(
-              elevation: 12,
-              color: Theme.of(context).colorScheme.surface,
+              color: currentColors.primary,
               child: SafeArea(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Padding(
-                      padding: const EdgeInsets.only(top: 8.0, right: 8.0),
-                      child: Align(
-                        alignment: Alignment.topRight,
-                        child: IconButton(
-                          icon: const Icon(Icons.close),
-                          tooltip: '閉じる',
-                          onPressed: () {
-                            setState(() {
-                              _isMenuOpen = false;
-                            });
-                          },
-                        ),
-                      ),
-                    ),
                     const SizedBox(height: 20),
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 24.0),
                       child: TextButton(
                         style: TextButton.styleFrom(
-                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
-                          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                          backgroundColor: currentColors.onPrimary.withOpacity(0.12),
+                          foregroundColor: currentColors.onPrimary,
                           padding: const EdgeInsets.symmetric(vertical: 16.0),
                           textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
