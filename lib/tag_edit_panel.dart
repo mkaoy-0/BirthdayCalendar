@@ -3,32 +3,108 @@ import 'package:flutter/material.dart';
 class TagEditPanel extends StatelessWidget {
   const TagEditPanel({
     super.key,
-    required this.tagText,
+    required this.tags,
+    required this.editingIndex,
     required this.isEditing,
     required this.colorScheme,
     required this.tagController,
     required this.tagFocusNode,
     required this.onToggleEditing,
     required this.onTagChanged,
+    required this.onTagButtonTap,
     required this.onSubmit,
-    this.onTagTap,
+    required this.onTagTap,
   });
 
-  final String tagText;
+  final List<String> tags;
+  final int? editingIndex;
   final bool isEditing;
   final ColorScheme colorScheme;
   final TextEditingController tagController;
   final FocusNode tagFocusNode;
   final VoidCallback onToggleEditing;
   final ValueChanged<String> onTagChanged;
+  final ValueChanged<int> onTagButtonTap;
   final VoidCallback onSubmit;
-  final ValueChanged<String>? onTagTap;
+  final ValueChanged<String> onTagTap;
 
   @override
   Widget build(BuildContext context) {
     double tagFontsize = 11.0;
+
+    Widget buildTagItem(int index) {
+      final isBlank = index == tags.length;
+      final isSelected = editingIndex == index;
+      final text = isBlank ? '' : tags[index];
+
+      if (isSelected) {
+        return Container(
+          height: 32,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          margin: const EdgeInsets.only(right: 8),
+          decoration: BoxDecoration(
+            color: colorScheme.primaryContainer,
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Center(
+            child: SizedBox(
+              width: 140,
+              child: TextField(
+                controller: tagController,
+                focusNode: tagFocusNode,
+                autofocus: false,
+                cursorColor: colorScheme.onPrimaryContainer,
+                style: TextStyle(
+                  color: colorScheme.onPrimaryContainer,
+                  fontWeight: FontWeight.w500,
+                  fontSize: tagFontsize,
+                ),
+                decoration: const InputDecoration.collapsed(
+                  hintText: '',
+                ),
+                onChanged: onTagChanged,
+                onSubmitted: (_) => onSubmit(),
+              ),
+            ),
+          ),
+        );
+      }
+
+      return InkWell(
+        onTap: () => onTagButtonTap(index),
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          height: 32,
+          margin: const EdgeInsets.only(right: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12),
+          decoration: BoxDecoration(
+            color: text.isEmpty
+                ? colorScheme.surfaceVariant
+                : colorScheme.tertiary.withValues(alpha: 0.82),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: text.isEmpty
+                  ? colorScheme.outline
+                  : Colors.transparent,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              text.isEmpty ? '' : text,
+              style: TextStyle(
+                color: text.isEmpty
+                    ? colorScheme.onSurfaceVariant
+                    : colorScheme.onTertiary,
+                fontWeight: FontWeight.w500,
+                fontSize: tagFontsize,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
     return Row(
-      mainAxisSize: MainAxisSize.min,
       children: [
         Container(
           width: 24,
@@ -52,69 +128,63 @@ class TagEditPanel extends StatelessWidget {
             tooltip: isEditing ? 'タグ編集を終了' : 'タグを編集',
           ),
         ),
-        if (isEditing) ...[
-          const SizedBox(width: 8),
-          Container(
-            height: 24,
-            padding: const EdgeInsets.symmetric(horizontal: 6),
-            decoration: BoxDecoration(
-              color: colorScheme.primaryContainer,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: IntrinsicWidth(
-              stepWidth: 1,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(
-                  minWidth: 12,
-                  maxWidth: 240,
-                ),
-                child: TextField(
-                  controller: tagController,
-                  focusNode: tagFocusNode,
-                  autofocus: true,
-                  cursorColor: colorScheme.onPrimaryContainer,
-                  style: TextStyle(
-                    color: colorScheme.onPrimaryContainer,
-                    fontWeight: FontWeight.w500,
-                    fontSize: tagFontsize,
+        const SizedBox(width: 8),
+        Expanded(
+          child: isEditing
+              ? SizedBox(
+                  height: 40,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: List<Widget>.generate(
+                        tags.length + 1,
+                        (index) => buildTagItem(index),
+                      ),
+                    ),
                   ),
-                  textAlignVertical: TextAlignVertical.center,
-                  decoration: const InputDecoration.collapsed(
-                    hintText: '',
-                  ),
-                  onChanged: onTagChanged,
-                  onSubmitted: (_) => onSubmit(),
-                ),
-              ),
-            ),
-          ),
-        ] else if (tagText.isNotEmpty) ...[
-          const SizedBox(width: 8),
-          GestureDetector(
-            onTap: () {
-              if (onTagTap != null) onTagTap!(tagText);
-            },
-            behavior: HitTestBehavior.opaque,
-            child: Container(
-              height: 24,
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              decoration: BoxDecoration(
-                color: colorScheme.tertiary.withValues(alpha: 0.82),
-                borderRadius: BorderRadius.circular(6),
-              ),
-              child: Center(
-                child: Text(
-                  tagText,
-                  style: TextStyle(
-                    color: colorScheme.onTertiary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: tagFontsize,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ],
+                )
+              : tags.isEmpty
+                  ? const SizedBox.shrink()
+                  : SizedBox(
+                      height: 40,
+                      child: SingleChildScrollView(
+                        scrollDirection: Axis.horizontal,
+                        child: Row(
+                          children: tags
+                              .map(
+                                (tag) => Padding(
+                                  padding: const EdgeInsets.only(right: 8.0),
+                                  child: GestureDetector(
+                                    onTap: () => onTagTap(tag),
+                                    child: Container(
+                                      height: 32,
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 12,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: colorScheme.tertiary
+                                            .withValues(alpha: 0.82),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          tag,
+                                          style: TextStyle(
+                                            color: colorScheme.onTertiary,
+                                            fontWeight: FontWeight.w500,
+                                            fontSize: tagFontsize,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              )
+                              .toList(),
+                        ),
+                      ),
+                    ),
+        ),
       ],
     );
   }
