@@ -385,7 +385,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
             fontWeight: FontWeight.w500, // ほんの少しだけ線を細くして上品に（お好みで太くもできます）
           ),
         ),
-        backgroundColor: Theme.of(context).colorScheme.primary,
+        backgroundColor: currentColors.primary,
         actions: [
           IconButton(
             icon: Icon(
