@@ -9,6 +9,7 @@ import 'package:dynamic_color/dynamic_color.dart'; // DynamicColorBuilderのエ�
 import 'theme_service.dart'; // 👈 ThemeServiceのエラーを消すお守り
 import 'notification_service.dart';
 import 'search_menu_panel.dart';
+import 'tag_edit_panel.dart';
 
 // ★裏方タスクの名前を定義
 const String wallpaperTaskName = "com.example.dailyWallpaperTask";
@@ -174,10 +175,16 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
   int? selectedDay;
   // ★追加：テキスト入力欄を表示するかどうかのフラグ
   bool showTextField = false;
+  bool showTagEditor = false;
   // ★追加：右側から出るメニューを開閉するフラグ
   bool _isMenuOpen = false;
 
   final textController = TextEditingController(); // ★テキスト入力欄のコントローラー
+  final TextEditingController tagController = TextEditingController();
+
+  final FocusNode tagFocusNode = FocusNode();
+
+  final Map<String, String> dateTags = {}; // ★日付ごとのタグを保存するマップ
 
   // ★アプリ起動時に、スマホに保存されているデータを自動で読み込む処理
   @override
@@ -199,6 +206,9 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
         } else if (key.contains('memo_')) {
           String dateKey = key.replaceFirst('memo_', '');
           dateMemos[dateKey] = prefs.getString(key) ?? ''; // メモのデータを読み込む
+        } else if (key.contains('tag_')) {
+          String dateKey = key.replaceFirst('tag_', '');
+          dateTags[dateKey] = prefs.getString(key) ?? ''; // タグのデータを読み込む
         } else {
           selectedImages[key] =
               prefs.getString(key) ?? ''; // それ以外は画像のデータとして読み込む
@@ -329,6 +339,22 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
       await prefs.setString('memo_$key', text);
       setState(() {
         dateMemos[key] = text;
+      });
+    }
+  }
+
+  Future<void> _saveTag(int month, int day, String text) async {
+    final prefs = await SharedPreferences.getInstance();
+    String key = '$month-$day';
+    if (text.isEmpty) {
+      await prefs.remove('tag_$key');
+      setState(() {
+        dateTags.remove(key);
+      });
+    } else {
+      await prefs.setString('tag_$key', text);
+      setState(() {
+        dateTags[key] = text;
       });
     }
   }
@@ -502,11 +528,15 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
                                           if (selectedDay == dayNumber) {
                                             selectedDay = null;
                                             showTextField = false;
-                                          } else {
-                                            selectedDay = dayNumber;
-                                            showTextField = false;
-                                            textController.text =
-                                                dateMemos[key] ?? '';
+                                          showTagEditor = false;
+                                        } else {
+                                          selectedDay = dayNumber;
+                                          showTextField = false;
+                                          showTagEditor = false;
+                                          textController.text =
+                                              dateMemos[key] ?? '';
+                                          tagController.text =
+                                              dateTags[key] ?? '';
                                           }
                                         });
                                       },
@@ -779,24 +809,76 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
                                     null &&
                                 dateMemos['$currentMonth-$selectedDay']!
                                     .isNotEmpty)
-                              Align(
-                                alignment: Alignment.centerLeft,
-                                child: Padding(
-                                  padding: const EdgeInsets.only(
-                                    top: 10.0,
-                                    bottom: 16.0,
-                                    left: 4.0,
-                                  ),
-                                  child: Text(
-                                    dateMemos['$currentMonth-$selectedDay']!,
-                                    style: TextStyle(
-                                      fontSize: 15,
-                                      fontFamily: 'serif',
-                                      color: Colors.grey.shade700,
-                                      fontWeight: FontWeight.bold,
+                              Column(
+                                crossAxisAlignment:
+                                    CrossAxisAlignment.start,
+                                children: [
+                                  Align(
+                                    alignment: Alignment.centerLeft,
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(
+                                        top: 10.0,
+                                        left: 4.0,
+                                      ),
+                                      child: Text(
+                                        dateMemos['$currentMonth-$selectedDay']!,
+                                        style: TextStyle(
+                                          fontSize: 15,
+                                          fontFamily: 'serif',
+                                          color: Colors.grey.shade700,
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                      ),
                                     ),
                                   ),
-                                ),
+                                  const SizedBox(height: 8),
+                                  Padding(
+                                    padding: const EdgeInsets.only(
+                                      left: 4.0,
+                                      bottom: 16.0,
+                                    ),
+                                    child: TagEditPanel(
+                                      tagText: dateTags[selectedKey] ?? '',
+                                      isEditing: showTagEditor,
+                                      colorScheme: currentColors,
+                                      tagController: tagController,
+                                      tagFocusNode: tagFocusNode,
+                                      onToggleEditing: () {
+                                        setState(() {
+                                          showTagEditor = !showTagEditor;
+                                          if (showTagEditor) {
+                                            tagController.text =
+                                                dateTags[selectedKey] ??
+                                                    '';
+                                            FocusScope.of(context)
+                                                .requestFocus(tagFocusNode);
+                                          } else {
+                                            FocusScope.of(context)
+                                                .unfocus();
+                                          }
+                                        });
+                                      },
+                                      onTagChanged: (text) {
+                                        _saveTag(
+                                          currentMonth,
+                                          selectedDay!,
+                                          text,
+                                        );
+                                      },
+                                      onSubmit: () async {
+                                        await _saveTag(
+                                          currentMonth,
+                                          selectedDay!,
+                                          tagController.text,
+                                        );
+                                        setState(() {
+                                          showTagEditor = false;
+                                        });
+                                        FocusScope.of(context).unfocus();
+                                      },
+                                    ),
+                                  ),
+                                ],
                               ),
                           ],
                         ],
