@@ -14,7 +14,7 @@ class MenuSearchPanel extends StatefulWidget {
   final String defaultImagePath;
   final Future<void> Function() onPickDefaultWallpaper;
   final Map<String, String> dateMemos;
-  final Map<String, String> dateTags;
+  final Map<String, List<String>> dateTags;
   final ValueChanged<String> onTagTap;
   final ColorScheme colorScheme;
 
@@ -40,13 +40,15 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
 
     if (lowerQuery.isNotEmpty) {
       final seenTags = <String>{};
-      widget.dateTags.values.forEach((tag) {
-        if (seenTags.contains(tag)) return;
-        if (tag.toLowerCase().contains(lowerQuery)) {
-          seenTags.add(tag);
-          results.add({'kind': 'tag', 'text': tag});
+      for (final tagList in widget.dateTags.values) {
+        for (final tag in tagList) {
+          if (tag.isEmpty || seenTags.contains(tag)) continue;
+          if (tag.toLowerCase().contains(lowerQuery)) {
+            seenTags.add(tag);
+            results.add({'kind': 'tag', 'text': tag});
+          }
         }
-      });
+      }
 
       widget.dateMemos.forEach((key, memo) {
         if (memo.toLowerCase().contains(lowerQuery)) {
@@ -197,7 +199,7 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                               ),
                               decoration: BoxDecoration(
                                 color: isTag
-                                    ? widget.colorScheme.primary.withOpacity(0.16)
+                                    ? widget.colorScheme.primaryContainer.withValues(alpha: 0.6) // タグの背景色
                                     : widget.colorScheme.onPrimary.withValues(
                                         alpha: 0.12,
                                       ),

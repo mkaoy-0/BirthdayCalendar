@@ -189,7 +189,8 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
 
   final FocusNode tagFocusNode = FocusNode();
 
-  final Map<String, String> dateTags = {}; // ★日付ごとのタグを保存するマップ
+  final Map<String, List<String>> dateTags = {}; // ★日付ごとのタグを保存するマップ
+  int? editingTagIndex;
 
   // ★アプリ起動時に、スマホに保存されているデータを自動で読み込む処理
   @override
@@ -245,7 +246,15 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
           dateMemos[dateKey] = prefs.getString(key) ?? ''; // メモのデータを読み込む
         } else if (key.contains('tag_')) {
           String dateKey = key.replaceFirst('tag_', '');
-          dateTags[dateKey] = prefs.getString(key) ?? ''; // タグのデータを読み込む
+          final savedTags = prefs.getStringList('tag_$dateKey');
+          if (savedTags != null) {
+            dateTags[dateKey] = savedTags;
+          } else {
+            final singleTag = prefs.getString('tag_$dateKey');
+            if (singleTag != null && singleTag.isNotEmpty) {
+              dateTags[dateKey] = [singleTag];
+            }
+          }
         } else {
           selectedImages[key] =
               prefs.getString(key) ?? ''; // それ以外は画像のデータとして読み込む
@@ -380,18 +389,18 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     }
   }
 
-  Future<void> _saveTag(int month, int day, String text) async {
+  Future<void> _saveTag(int month, int day, List<String> tags) async {
     final prefs = await SharedPreferences.getInstance();
     String key = '$month-$day';
-    if (text.isEmpty) {
+    if (tags.isEmpty) {
       await prefs.remove('tag_$key');
       setState(() {
         dateTags.remove(key);
       });
     } else {
-      await prefs.setString('tag_$key', text);
+      await prefs.setStringList('tag_$key', tags);
       setState(() {
-        dateTags[key] = text;
+        dateTags[key] = tags;
       });
     }
   }
@@ -601,15 +610,14 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                           if (selectedDay == dayNumber) {
                                             selectedDay = null;
                                             showTextField = false;
-                                          showTagEditor = false;
-                                        } else {
-                                          selectedDay = dayNumber;
-                                          showTextField = false;
-                                          showTagEditor = false;
-                                          textController.text =
-                                              dateMemos[key] ?? '';
-                                          tagController.text =
-                                              dateTags[key] ?? '';
+                                            showTagEditor = false;
+                                          } else {
+                                            selectedDay = dayNumber;
+                                            showTextField = false;
+                                            showTagEditor = false;
+                                            textController.text =
+                                                dateMemos[key] ?? '';
+                                            tagController.clear();
                                           }
                                         });
                                       },
@@ -911,7 +919,8 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                       bottom: 16.0,
                                     ),
                                     child: TagEditPanel(
-                                      tagText: dateTags[selectedKey] ?? '',
+                                      tags: dateTags[selectedKey] ?? [],
+                                      editingIndex: editingTagIndex,
                                       isEditing: showTagEditor,
                                       colorScheme: currentColors,
                                       tagController: tagController,
@@ -920,40 +929,60 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                         final wasEditing = showTagEditor;
                                         setState(() {
                                           showTagEditor = !showTagEditor;
-                                          if (showTagEditor) {
-                                            tagController.text =
-                                                dateTags[selectedKey] ??
-                                                    '';
-                                          }
+                                          editingTagIndex = null;
+                                          tagController.clear();
                                         });
-                                        if (!wasEditing && !showTagEditor) {
-                                          // no-op
-                                        }
-                                        if (showTagEditor) {
-                                          WidgetsBinding.instance
-                                              .addPostFrameCallback((_) {
-                                            tagFocusNode.requestFocus();
-                                          });
-                                        } else {
+                                        if (!showTagEditor) {
                                           FocusScope.of(context).unfocus();
                                         }
                                       },
                                       onTagChanged: (text) {
-                                        _saveTag(
-                                          currentMonth,
-                                          selectedDay!,
-                                          text,
-                                        );
+                                        // controller already tracks text
+                                      },
+                                      onTagButtonTap: (index) {
+                                        final tags = dateTags[selectedKey] ?? [];
+                                        setState(() {
+                                          showTagEditor = true;
+                                          editingTagIndex = index;
+                                          if (index < tags.length) {
+                                            tagController.text = tags[index];
+                                          } else {
+                                            tagController.clear();
+                                          }
+                                        });
+                                        WidgetsBinding.instance
+                                            .addPostFrameCallback((_) {
+                                          tagFocusNode.requestFocus();
+                                        });
                                       },
                                       onTagTap: (tag) => _openTagSearch(tag),
                                       onSubmit: () async {
+                                        final tags = List<String>.from(
+                                            dateTags[selectedKey] ?? []);
+                                        final newText =
+                                            tagController.text.trim();
+                                        if (editingTagIndex != null) {
+                                          if (editingTagIndex! < tags.length) {
+                                            if (newText.isEmpty) {
+                                              tags.removeAt(editingTagIndex!);
+                                            } else {
+                                              tags[editingTagIndex!] = newText;
+                                            }
+                                          } else if (editingTagIndex == tags.length &&
+                                              newText.isNotEmpty) {
+                                            tags.add(newText);
+                                          }
+                                        } else if (newText.isNotEmpty) {
+                                          tags.add(newText);
+                                        }
                                         await _saveTag(
                                           currentMonth,
                                           selectedDay!,
-                                          tagController.text,
+                                          tags,
                                         );
                                         setState(() {
                                           showTagEditor = false;
+                                          editingTagIndex = null;
                                         });
                                         FocusScope.of(context).unfocus();
                                       },

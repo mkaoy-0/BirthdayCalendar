@@ -11,7 +11,7 @@ class TagSearchPanel extends StatelessWidget {
   });
 
   final String tag;
-  final Map<String, String> dateTags;
+  final Map<String, List<String>> dateTags;
   final Map<String, String> dateMemos;
   final VoidCallback onClose;
   final ColorScheme colorScheme;
@@ -19,7 +19,7 @@ class TagSearchPanel extends StatelessWidget {
   List<String> _matchingKeys() {
     final List<String> keys = [];
     dateTags.forEach((k, v) {
-      if (v == tag) keys.add(k);
+      if (v.contains(tag)) keys.add(k);
     });
     keys.sort((a, b) {
       // sort by MMDD numeric
@@ -63,7 +63,7 @@ class TagSearchPanel extends StatelessWidget {
                   child: Container(
                     width: double.infinity,
                     decoration: BoxDecoration(
-                      color: colorScheme.primary,
+                      color: colorScheme.tertiary.withValues(alpha: 0.85),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     padding: const EdgeInsets.symmetric(
@@ -71,20 +71,20 @@ class TagSearchPanel extends StatelessWidget {
                       vertical: 12.0,
                     ),
                     child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Icon(
                           Icons.label,
                           color: colorScheme.onPrimary,
-                          size: 18,
+                          size: 15,
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             tag,
                             style: TextStyle(
                               color: colorScheme.onPrimary,
-                              fontSize: 16,
+                              fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
                             softWrap: true,
@@ -118,7 +118,7 @@ class TagSearchPanel extends StatelessWidget {
                             return Padding(
                               padding: const EdgeInsets.only(left: 8.0),
                               child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.center,
                                 children: [
                                   SizedBox(
                                     width: 55,
@@ -158,11 +158,16 @@ class TagSearchPanel extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton(
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: colorScheme.primary,
+                        backgroundColor: colorScheme.tertiary.withValues(alpha: 0.85),
                         foregroundColor: colorScheme.onPrimary,
                       ),
                       onPressed: onClose,
-                      child: const Text('閉じる'),
+                      child: const Text(
+                        '閉じる',
+                        style: TextStyle(
+                          fontFamily: 'roboto',
+                        ),
+                      ),
                     ),
                   ),
                 ),
