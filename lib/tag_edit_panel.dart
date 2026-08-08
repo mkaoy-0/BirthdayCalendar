@@ -39,16 +39,15 @@ class TagEditPanel extends StatelessWidget {
 
       if (isSelected) {
         return Container(
-          height: 32,
+          height: 28,
           padding: const EdgeInsets.symmetric(horizontal: 10),
           margin: const EdgeInsets.only(right: 8),
           decoration: BoxDecoration(
             color: colorScheme.primaryContainer,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(6),
           ),
           child: Center(
-            child: SizedBox(
-              width: 140,
+            child: IntrinsicWidth(
               child: TextField(
                 controller: tagController,
                 focusNode: tagFocusNode,
@@ -59,9 +58,7 @@ class TagEditPanel extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                   fontSize: tagFontsize,
                 ),
-                decoration: const InputDecoration.collapsed(
-                  hintText: '',
-                ),
+                decoration: const InputDecoration.collapsed(hintText: ''),
                 onChanged: onTagChanged,
                 onSubmitted: (_) => onSubmit(),
               ),
@@ -72,29 +69,22 @@ class TagEditPanel extends StatelessWidget {
 
       return InkWell(
         onTap: () => onTagButtonTap(index),
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(6),
         child: Container(
-          height: 32,
+          height: 28,
           margin: const EdgeInsets.only(right: 8),
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
-            color: text.isEmpty
-                ? colorScheme.surfaceVariant
-                : colorScheme.tertiary.withValues(alpha: 0.82),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: text.isEmpty
-                  ? colorScheme.outline
-                  : Colors.transparent,
-            ),
+            color: colorScheme.primaryContainer.withValues(alpha: 1),
+            borderRadius: BorderRadius.circular(6),
           ),
           child: Center(
             child: Text(
               text.isEmpty ? '' : text,
               style: TextStyle(
                 color: text.isEmpty
-                    ? colorScheme.onSurfaceVariant
-                    : colorScheme.onTertiary,
+                    ? colorScheme.onTertiary
+                    : colorScheme.onPrimaryContainer,
                 fontWeight: FontWeight.w500,
                 fontSize: tagFontsize,
               ),
@@ -107,22 +97,23 @@ class TagEditPanel extends StatelessWidget {
     return Row(
       children: [
         Container(
-          width: 24,
-          height: 24,
+          width: 28,
+          height: 28,
           decoration: BoxDecoration(
-            color: colorScheme.primary,
+            color: isEditing
+                ? colorScheme.tertiaryContainer
+                : colorScheme.primary,
             borderRadius: BorderRadius.circular(6),
           ),
           child: IconButton(
-            constraints: const BoxConstraints.tightFor(
-              width: 24,
-              height: 24,
-            ),
+            constraints: const BoxConstraints.tightFor(width: 28, height: 28),
             padding: EdgeInsets.zero,
             iconSize: 14,
             icon: Icon(
               isEditing ? Icons.check : Icons.label,
-              color: colorScheme.onPrimary,
+              color: isEditing
+                  ? colorScheme.onTertiaryContainer
+                  : colorScheme.onPrimary,
             ),
             onPressed: onToggleEditing,
             tooltip: isEditing ? 'タグ編集を終了' : 'タグを編集',
@@ -144,46 +135,47 @@ class TagEditPanel extends StatelessWidget {
                   ),
                 )
               : tags.isEmpty
-                  ? const SizedBox.shrink()
-                  : SizedBox(
-                      height: 40,
-                      child: SingleChildScrollView(
-                        scrollDirection: Axis.horizontal,
-                        child: Row(
-                          children: tags
-                              .map(
-                                (tag) => Padding(
-                                  padding: const EdgeInsets.only(right: 8.0),
-                                  child: GestureDetector(
-                                    onTap: () => onTagTap(tag),
-                                    child: Container(
-                                      height: 32,
-                                      padding: const EdgeInsets.symmetric(
-                                        horizontal: 12,
-                                      ),
-                                      decoration: BoxDecoration(
-                                        color: colorScheme.tertiary
-                                            .withValues(alpha: 0.82),
-                                        borderRadius: BorderRadius.circular(12),
-                                      ),
-                                      child: Center(
-                                        child: Text(
-                                          tag,
-                                          style: TextStyle(
-                                            color: colorScheme.onTertiary,
-                                            fontWeight: FontWeight.w500,
-                                            fontSize: tagFontsize,
-                                          ),
-                                        ),
+              ? const SizedBox(height: 40)
+              : SizedBox(
+                  height: 40,
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: tags
+                          .map(
+                            (tag) => Padding(
+                              padding: const EdgeInsets.only(right: 8.0),
+                              child: GestureDetector(
+                                onTap: () => onTagTap(tag),
+                                child: Container(
+                                  height: 28,
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: colorScheme.tertiary.withValues(
+                                      alpha: 0.82,
+                                    ),
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Center(
+                                    child: Text(
+                                      tag,
+                                      style: TextStyle(
+                                        color: colorScheme.onTertiary,
+                                        fontWeight: FontWeight.w500,
+                                        fontSize: tagFontsize,
                                       ),
                                     ),
                                   ),
                                 ),
-                              )
-                              .toList(),
-                        ),
-                      ),
+                              ),
+                            ),
+                          )
+                          .toList(),
                     ),
+                  ),
+                ),
         ),
       ],
     );

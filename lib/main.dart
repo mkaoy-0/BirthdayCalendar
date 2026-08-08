@@ -207,15 +207,13 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
       vsync: this,
       duration: const Duration(milliseconds: 250),
     );
-    _tagSearchOffset = Tween<Offset>(
-      begin: const Offset(1, 0),
-      end: Offset.zero,
-    ).animate(
-      CurvedAnimation(
-        parent: _tagSearchController!,
-        curve: Curves.easeOutCubic,
-      ),
-    );
+    _tagSearchOffset =
+        Tween<Offset>(begin: const Offset(1, 0), end: Offset.zero).animate(
+          CurvedAnimation(
+            parent: _tagSearchController!,
+            curve: Curves.easeOutCubic,
+          ),
+        );
     _tagSearchController!.addStatusListener((status) {
       if (status == AnimationStatus.dismissed) {
         _tagSearchOverlay?.remove();
@@ -411,27 +409,29 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
 
     final overlay = Overlay.of(context, rootOverlay: true);
 
-    _tagSearchOverlay = OverlayEntry(builder: (ctx) {
-      final cs = Theme.of(ctx).colorScheme;
-      return Stack(
-        children: [
-          ModalBarrier(dismissible: false, color: Colors.black54),
-          Align(
-            alignment: Alignment.centerRight,
-            child: SlideTransition(
-              position: _tagSearchOffset!,
-              child: TagSearchPanel(
-                tag: tag,
-                dateTags: dateTags,
-                dateMemos: dateMemos,
-                onClose: _closeTagSearch,
-                colorScheme: cs,
+    _tagSearchOverlay = OverlayEntry(
+      builder: (ctx) {
+        final cs = Theme.of(ctx).colorScheme;
+        return Stack(
+          children: [
+            ModalBarrier(dismissible: false, color: Colors.black54),
+            Align(
+              alignment: Alignment.centerRight,
+              child: SlideTransition(
+                position: _tagSearchOffset!,
+                child: TagSearchPanel(
+                  tag: tag,
+                  dateTags: dateTags,
+                  dateMemos: dateMemos,
+                  onClose: _closeTagSearch,
+                  colorScheme: cs,
+                ),
               ),
             ),
-          ),
-        ],
-      );
-    });
+          ],
+        );
+      },
+    );
     overlay.insert(_tagSearchOverlay!);
     _tagSearchController?.forward(from: 0);
   }
@@ -891,8 +891,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                 dateMemos['$currentMonth-$selectedDay']!
                                     .isNotEmpty)
                               Column(
-                                crossAxisAlignment:
-                                    CrossAxisAlignment.start,
+                                crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   Align(
                                     alignment: Alignment.centerLeft,
@@ -925,22 +924,62 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                       colorScheme: currentColors,
                                       tagController: tagController,
                                       tagFocusNode: tagFocusNode,
-                                      onToggleEditing: () {
-                                        final wasEditing = showTagEditor;
-                                        setState(() {
-                                          showTagEditor = !showTagEditor;
-                                          editingTagIndex = null;
-                                          tagController.clear();
-                                        });
-                                        if (!showTagEditor) {
+                                      onToggleEditing: () async {
+                                        if (showTagEditor) {
+                                          // 💡 編集中（チェックボタン）の時に押されたら保存を実行
+                                          final tags = List<String>.from(
+                                            dateTags[selectedKey] ?? [],
+                                          );
+                                          final newText = tagController.text
+                                              .trim();
+
+                                          if (editingTagIndex != null) {
+                                            if (editingTagIndex! <
+                                                tags.length) {
+                                              if (newText.isEmpty) {
+                                                tags.removeAt(editingTagIndex!);
+                                              } else {
+                                                tags[editingTagIndex!] =
+                                                    newText;
+                                              }
+                                            } else if (editingTagIndex ==
+                                                    tags.length &&
+                                                newText.isNotEmpty) {
+                                              tags.add(newText);
+                                            }
+                                          } else if (newText.isNotEmpty) {
+                                            tags.add(newText);
+                                          }
+
+                                          // データの保存（ここで async/await が必要になります）
+                                          await _saveTag(
+                                            currentMonth,
+                                            selectedDay!,
+                                            tags,
+                                          );
+
+                                          // 保存が完了したら編集モードを閉じる（もとのコードにあった更新とunfocus処理）
+                                          setState(() {
+                                            showTagEditor = false;
+                                            editingTagIndex = null;
+                                            tagController.clear();
+                                          });
                                           FocusScope.of(context).unfocus();
+                                        } else {
+                                          // 💡 非編集中の時に押されたら編集モードを開く（もとのコードにあった処理）
+                                          setState(() {
+                                            showTagEditor = true;
+                                            editingTagIndex = null;
+                                            tagController.clear();
+                                          });
                                         }
                                       },
                                       onTagChanged: (text) {
                                         // controller already tracks text
                                       },
                                       onTagButtonTap: (index) {
-                                        final tags = dateTags[selectedKey] ?? [];
+                                        final tags =
+                                            dateTags[selectedKey] ?? [];
                                         setState(() {
                                           showTagEditor = true;
                                           editingTagIndex = index;
@@ -952,15 +991,16 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                         });
                                         WidgetsBinding.instance
                                             .addPostFrameCallback((_) {
-                                          tagFocusNode.requestFocus();
-                                        });
+                                              tagFocusNode.requestFocus();
+                                            });
                                       },
                                       onTagTap: (tag) => _openTagSearch(tag),
                                       onSubmit: () async {
                                         final tags = List<String>.from(
-                                            dateTags[selectedKey] ?? []);
-                                        final newText =
-                                            tagController.text.trim();
+                                          dateTags[selectedKey] ?? [],
+                                        );
+                                        final newText = tagController.text
+                                            .trim();
                                         if (editingTagIndex != null) {
                                           if (editingTagIndex! < tags.length) {
                                             if (newText.isEmpty) {
@@ -968,7 +1008,8 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                             } else {
                                               tags[editingTagIndex!] = newText;
                                             }
-                                          } else if (editingTagIndex == tags.length &&
+                                          } else if (editingTagIndex ==
+                                                  tags.length &&
                                               newText.isNotEmpty) {
                                             tags.add(newText);
                                           }
