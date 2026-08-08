@@ -359,6 +359,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
             ),
             tooltip: 'メニュー',
             onPressed: () {
+              FocusScope.of(context).unfocus(); // キーボードが出ているときは閉じる
               setState(() {
                 _isMenuOpen = !_isMenuOpen;
               });
