@@ -145,7 +145,8 @@ class WallpaperCalendarPage extends StatefulWidget {
   State<WallpaperCalendarPage> createState() => _WallpaperCalendarPageState();
 }
 
-class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
+class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
+    with SingleTickerProviderStateMixin {
   late final PageController _pageController = PageController(
     initialPage: 1200 + currentMonth - 1,
   );
@@ -178,6 +179,8 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
   bool showTextField = false;
   bool showTagEditor = false;
   OverlayEntry? _tagSearchOverlay;
+  AnimationController? _tagSearchController;
+  Animation<Offset>? _tagSearchOffset;
   // ★追加：右側から出るメニューを開閉するフラグ
   bool _isMenuOpen = false;
 
@@ -192,7 +195,39 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
   @override
   void initState() {
     super.initState();
+    _ensureTagSearchAnimation();
     _loadSavedImages(); // 読み込み開始
+  }
+
+  void _ensureTagSearchAnimation() {
+    if (_tagSearchController != null) return;
+
+    _tagSearchController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 250),
+    );
+    _tagSearchOffset = Tween<Offset>(
+      begin: const Offset(1, 0),
+      end: Offset.zero,
+    ).animate(
+      CurvedAnimation(
+        parent: _tagSearchController!,
+        curve: Curves.easeOutCubic,
+      ),
+    );
+    _tagSearchController!.addStatusListener((status) {
+      if (status == AnimationStatus.dismissed) {
+        _tagSearchOverlay?.remove();
+        _tagSearchOverlay = null;
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _tagSearchController?.dispose();
+    _tagSearchOverlay?.remove();
+    super.dispose();
   }
 
   // ★スマホからデータを読み込む関数
@@ -363,7 +398,10 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
 
   void _openTagSearch(String tag) {
     if (_tagSearchOverlay != null) return;
+    _ensureTagSearchAnimation();
+
     final overlay = Overlay.of(context, rootOverlay: true);
+
     _tagSearchOverlay = OverlayEntry(builder: (ctx) {
       final cs = Theme.of(ctx).colorScheme;
       return Stack(
@@ -371,23 +409,27 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
           ModalBarrier(dismissible: false, color: Colors.black54),
           Align(
             alignment: Alignment.centerRight,
-            child: TagSearchPanel(
-              tag: tag,
-              dateTags: dateTags,
-              dateMemos: dateMemos,
-              onClose: _closeTagSearch,
-              colorScheme: cs,
+            child: SlideTransition(
+              position: _tagSearchOffset!,
+              child: TagSearchPanel(
+                tag: tag,
+                dateTags: dateTags,
+                dateMemos: dateMemos,
+                onClose: _closeTagSearch,
+                colorScheme: cs,
+              ),
             ),
           ),
         ],
       );
     });
-    overlay?.insert(_tagSearchOverlay!);
+    overlay.insert(_tagSearchOverlay!);
+    _tagSearchController?.forward(from: 0);
   }
 
   void _closeTagSearch() {
-    _tagSearchOverlay?.remove();
-    _tagSearchOverlay = null;
+    if (_tagSearchOverlay == null) return;
+    _tagSearchController?.reverse();
   }
 
   @override
