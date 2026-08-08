@@ -196,13 +196,17 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                                 vertical: 13.0,
                               ),
                               decoration: BoxDecoration(
-                                color: widget.colorScheme.onPrimary.withValues(
-                                  alpha: 0.12,
-                                ),
+                                color: isTag
+                                    ? widget.colorScheme.primary.withOpacity(0.16)
+                                    : widget.colorScheme.onPrimary.withValues(
+                                        alpha: 0.12,
+                                      ),
                                 borderRadius: BorderRadius.circular(12.0),
                               ),
                               child: isTag
                                   ? Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
                                       children: [
                                         Icon(
                                           Icons.label,
@@ -219,8 +223,8 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                                               fontFamily: 'Georgia',
                                               fontSize: searchResultFontsize,
                                             ),
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
+                                            softWrap: true,
+                                            overflow: TextOverflow.visible,
                                           ),
                                         ),
                                       ],

@@ -59,37 +59,40 @@ class TagSearchPanel extends StatelessWidget {
               children: [
                 // Header: tag display
                 Padding(
-                  padding: const EdgeInsets.all(12.0),
-                  child: Row(
-                    children: [
-                      Container(
-                        width: 34,
-                        height: 34,
-                        decoration: BoxDecoration(
-                          color: colorScheme.primary,
-                          borderRadius: BorderRadius.circular(8),
+                  padding: const EdgeInsets.fromLTRB(12.0, 30.0, 12.0, 15.0),
+                  child: Container(
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: colorScheme.primary,
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12.0,
+                      vertical: 12.0,
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.label,
+                          color: colorScheme.onPrimary,
+                          size: 18,
                         ),
-                        child: Center(
-                          child: Icon(
-                            Icons.label,
-                            color: colorScheme.onPrimary,
-                            size: 18,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            tag,
+                            style: TextStyle(
+                              color: colorScheme.onPrimary,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                            ),
+                            softWrap: true,
+                            overflow: TextOverflow.visible,
                           ),
                         ),
-                      ),
-                      const SizedBox(width: 12),
-                      Expanded(
-                        child: Text(
-                          tag,
-                          style: TextStyle(
-                            color: colorScheme.onSurface,
-                            fontSize: 16,
-                            fontWeight: FontWeight.w600,
-                          ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
                 const Divider(height: 1),
@@ -105,36 +108,45 @@ class TagSearchPanel extends StatelessWidget {
                           ),
                         )
                       : ListView.separated(
-                          padding: const EdgeInsets.all(12),
+                          padding: const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 40.0),
                           itemCount: keys.length,
                           separatorBuilder: (_, __) => const Divider(),
                           itemBuilder: (context, index) {
                             final key = keys[index];
                             final mmdd = _formatKey(key);
                             final memo = dateMemos[key] ?? '';
-                            return Row(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                SizedBox(
-                                  width: 76,
-                                  child: Text(
-                                    mmdd,
-                                    style: TextStyle(
-                                      color: colorScheme.onSurface,
-                                      fontWeight: FontWeight.w600,
+                            return Padding(
+                              padding: const EdgeInsets.only(left: 8.0),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    width: 55,
+                                    child: Text(
+                                      mmdd,
+                                      style: TextStyle(
+                                        color: colorScheme.onSurface,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 14,
+                                        fontFamily: 'Times New Roman',
+                                        fontStyle: FontStyle.italic,
+                                      ),
                                     ),
                                   ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    memo,
-                                    style: TextStyle(
-                                      color: colorScheme.onSurface.withOpacity(0.9),
+                                  const SizedBox(width: 0),
+                                  Expanded(
+                                    child: Text(
+                                      memo,
+                                      style: TextStyle(
+                                        color: colorScheme.onSurface.withValues(alpha: 0.9),
+                                        fontSize: 12,
+                                        fontFamily: 'roboto',
+                                        fontWeight: FontWeight.w400,
+                                      ),
                                     ),
                                   ),
-                                ),
-                              ],
+                                ],
+                              ),
                             );
                           },
                         ),
