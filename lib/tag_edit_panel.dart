@@ -29,18 +29,19 @@ class TagEditPanel extends StatelessWidget {
       mainAxisSize: MainAxisSize.min,
       children: [
         Container(
+          width: 24,
           height: 24,
           decoration: BoxDecoration(
             color: colorScheme.secondary,
             borderRadius: BorderRadius.circular(6),
           ),
           child: IconButton(
-            constraints: const BoxConstraints(
-              minWidth: 24,
-              minHeight: 24,
+            constraints: const BoxConstraints.tightFor(
+              width: 24,
+              height: 24,
             ),
-            padding: const EdgeInsets.all(4),
-            iconSize: 15,
+            padding: EdgeInsets.zero,
+            iconSize: 14,
             icon: Icon(
               isEditing ? Icons.check : Icons.label,
               color: colorScheme.onSecondary,
@@ -56,7 +57,7 @@ class TagEditPanel extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 6),
             decoration: BoxDecoration(
               color: colorScheme.secondaryContainer,
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: IntrinsicWidth(
               stepWidth: 1,
@@ -92,7 +93,7 @@ class TagEditPanel extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
               color: colorScheme.secondary.withValues(alpha: 0.82),
-              borderRadius: BorderRadius.circular(8),
+              borderRadius: BorderRadius.circular(6),
             ),
             child: Center(
               child: Text(
