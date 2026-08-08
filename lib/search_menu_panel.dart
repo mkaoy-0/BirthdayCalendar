@@ -6,12 +6,16 @@ class MenuSearchPanel extends StatefulWidget {
     required this.defaultImagePath,
     required this.onPickDefaultWallpaper,
     required this.dateMemos,
+    required this.dateTags,
+    required this.onTagTap,
     required this.colorScheme,
   });
 
   final String defaultImagePath;
   final Future<void> Function() onPickDefaultWallpaper;
   final Map<String, String> dateMemos;
+  final Map<String, String> dateTags;
+  final ValueChanged<String> onTagTap;
   final ColorScheme colorScheme;
 
   @override
@@ -35,16 +39,36 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
     final List<Map<String, String>> results = [];
 
     if (lowerQuery.isNotEmpty) {
+      final seenTags = <String>{};
+      widget.dateTags.values.forEach((tag) {
+        if (seenTags.contains(tag)) return;
+        if (tag.toLowerCase().contains(lowerQuery)) {
+          seenTags.add(tag);
+          results.add({'kind': 'tag', 'text': tag});
+        }
+      });
+
       widget.dateMemos.forEach((key, memo) {
         if (memo.toLowerCase().contains(lowerQuery)) {
           final parts = key.split('-');
           final paddedDate = parts.length == 2
               ? '${parts[0].padLeft(2, '0')}${parts[1].padLeft(2, '0')}'
               : key.replaceAll('-', '');
-          results.add({'date': paddedDate, 'memo': memo});
+          results.add({'kind': 'memo', 'date': paddedDate, 'text': memo});
         }
       });
-      results.sort((a, b) => (a['date'] ?? '').compareTo(b['date'] ?? ''));
+
+      results.sort((a, b) {
+        final kindA = a['kind'] ?? '';
+        final kindB = b['kind'] ?? '';
+        if (kindA != kindB) {
+          return kindA == 'tag' ? -1 : 1;
+        }
+        if (kindA == 'memo') {
+          return (a['date'] ?? '').compareTo(b['date'] ?? '');
+        }
+        return (a['text'] ?? '').compareTo(b['text'] ?? '');
+      });
     }
 
     setState(() {
@@ -132,7 +156,7 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                       child: Padding(
                         padding: const EdgeInsets.only(top: 8.0),
                         child: Text(
-                          '一致するメモはありません',
+                          '一致する結果はありません',
                           textAlign: TextAlign.center,
                           style: TextStyle(
                             color: widget.colorScheme.onPrimary.withValues(
@@ -152,52 +176,89 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                           const SizedBox(height: 10),
                       itemBuilder: (context, index) {
                         final result = searchResults[index];
+                        final isTag = result['kind'] == 'tag';
                         final cardWidth =
                             MediaQuery.of(context).size.width * 0.82;
                         return Align(
                           alignment: Alignment.topCenter,
-                          child: Container(
-                            width: cardWidth,
-                            // アイテムのスタイルを設定
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 16.0,
-                              vertical: 13.0,
-                            ),
-                            decoration: BoxDecoration(
-                              color: widget.colorScheme.onPrimary.withValues(
-                                alpha: 0.12,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(12.0),
+                            onTap: isTag
+                                ? () {
+                                    widget.onTagTap(result['text'] ?? '');
+                                    searchFocusNode.unfocus();
+                                  }
+                                : null,
+                            child: Container(
+                              width: cardWidth,
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 13.0,
                               ),
-                              borderRadius: BorderRadius.circular(12.0),
-                            ),
-                            child: Text.rich(
-                              TextSpan(
-                                children: [
-                                  TextSpan(
-                                    text: '${result['date'] ?? ''}    ',
-                                    style: TextStyle(
-                                      color: widget.colorScheme.onPrimary,
-                                      fontFamily: 'Times New Roman',
-                                      fontSize: searchResultFontsize + 2,
-                                      fontWeight: FontWeight.bold,
-                                      fontStyle: FontStyle.italic,
-                                    ),
-                                  ),
-                                  TextSpan(
-                                    text: (result['memo'] ?? '').replaceAll(
-                                      '\n',
-                                      ' ',
-                                    ),
-                                    style: TextStyle(
-                                      color: widget.colorScheme.onPrimary,
-                                      fontFamily: 'Georgia',
-                                      fontSize: searchResultFontsize,
-                                    ),
-                                  ),
-                                ],
+                              decoration: BoxDecoration(
+                                color: widget.colorScheme.onPrimary.withValues(
+                                  alpha: 0.12,
+                                ),
+                                borderRadius: BorderRadius.circular(12.0),
                               ),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                              textAlign: TextAlign.left,
+                              child: isTag
+                                  ? Row(
+                                      children: [
+                                        Icon(
+                                          Icons.label,
+                                          color: widget.colorScheme.onPrimary,
+                                          size: 18,
+                                        ),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Text(
+                                            result['text'] ?? '',
+                                            style: TextStyle(
+                                              color:
+                                                  widget.colorScheme.onPrimary,
+                                              fontFamily: 'Georgia',
+                                              fontSize: searchResultFontsize,
+                                            ),
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                          ),
+                                        ),
+                                      ],
+                                    )
+                                  : Text.rich(
+                                      TextSpan(
+                                        children: [
+                                          TextSpan(
+                                            text: '${result['date'] ?? ''}    ',
+                                            style: TextStyle(
+                                              color:
+                                                  widget.colorScheme.onPrimary,
+                                              fontFamily: 'Times New Roman',
+                                              fontSize:
+                                                  searchResultFontsize + 2,
+                                              fontWeight: FontWeight.bold,
+                                              fontStyle: FontStyle.italic,
+                                            ),
+                                          ),
+                                          TextSpan(
+                                            text: (result['text'] ?? '')
+                                                .replaceAll(
+                                              '\n',
+                                              ' ',
+                                            ),
+                                            style: TextStyle(
+                                              color:
+                                                  widget.colorScheme.onPrimary,
+                                              fontFamily: 'Georgia',
+                                              fontSize: searchResultFontsize,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                      textAlign: TextAlign.left,
+                                    ),
                             ),
                           ),
                         );
