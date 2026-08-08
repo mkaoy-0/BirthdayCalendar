@@ -177,8 +177,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
   // ★追加：テキスト入力欄を表示するかどうかのフラグ
   bool showTextField = false;
   bool showTagEditor = false;
-  bool showTagSearch = false;
-  String? searchTag;
+  OverlayEntry? _tagSearchOverlay;
   // ★追加：右側から出るメニューを開閉するフラグ
   bool _isMenuOpen = false;
 
@@ -360,6 +359,35 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
         dateTags[key] = text;
       });
     }
+  }
+
+  void _openTagSearch(String tag) {
+    if (_tagSearchOverlay != null) return;
+    final overlay = Overlay.of(context, rootOverlay: true);
+    _tagSearchOverlay = OverlayEntry(builder: (ctx) {
+      final cs = Theme.of(ctx).colorScheme;
+      return Stack(
+        children: [
+          ModalBarrier(dismissible: false, color: Colors.black54),
+          Align(
+            alignment: Alignment.centerRight,
+            child: TagSearchPanel(
+              tag: tag,
+              dateTags: dateTags,
+              dateMemos: dateMemos,
+              onClose: _closeTagSearch,
+              colorScheme: cs,
+            ),
+          ),
+        ],
+      );
+    });
+    overlay?.insert(_tagSearchOverlay!);
+  }
+
+  void _closeTagSearch() {
+    _tagSearchOverlay?.remove();
+    _tagSearchOverlay = null;
   }
 
   @override
@@ -875,12 +903,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
                                           text,
                                         );
                                       },
-                                      onTagTap: (tag) {
-                                        setState(() {
-                                          showTagSearch = true;
-                                          searchTag = tag;
-                                        });
-                                      },
+                                      onTagTap: (tag) => _openTagSearch(tag),
                                       onSubmit: () async {
                                         await _saveTag(
                                           currentMonth,
@@ -931,24 +954,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
               ),
             ),
           ),
-          if (showTagSearch && searchTag != null) ...[
-            ModalBarrier(
-              dismissible: false,
-              color: Colors.black54,
-            ),
-            TagSearchPanel(
-              tag: searchTag!,
-              dateTags: dateTags,
-              dateMemos: dateMemos,
-              onClose: () {
-                setState(() {
-                  showTagSearch = false;
-                  searchTag = null;
-                });
-              },
-              colorScheme: currentColors,
-            ),
-          ],
+          // TagSearchPanel is shown via Overlay so it can appear above AppBar
         ],
       ),
     );
