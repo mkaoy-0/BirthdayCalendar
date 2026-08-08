@@ -32,7 +32,7 @@ class TagEditPanel extends StatelessWidget {
           width: 24,
           height: 24,
           decoration: BoxDecoration(
-            color: colorScheme.secondary,
+            color: colorScheme.primary,
             borderRadius: BorderRadius.circular(6),
           ),
           child: IconButton(
@@ -44,7 +44,7 @@ class TagEditPanel extends StatelessWidget {
             iconSize: 14,
             icon: Icon(
               isEditing ? Icons.check : Icons.label,
-              color: colorScheme.onSecondary,
+              color: colorScheme.onPrimary,
             ),
             onPressed: onToggleEditing,
             tooltip: isEditing ? 'タグ編集を終了' : 'タグを編集',
@@ -56,7 +56,7 @@ class TagEditPanel extends StatelessWidget {
             height: 24,
             padding: const EdgeInsets.symmetric(horizontal: 6),
             decoration: BoxDecoration(
-              color: colorScheme.secondaryContainer,
+              color: colorScheme.primaryContainer,
               borderRadius: BorderRadius.circular(6),
             ),
             child: IntrinsicWidth(
@@ -70,9 +70,9 @@ class TagEditPanel extends StatelessWidget {
                   controller: tagController,
                   focusNode: tagFocusNode,
                   autofocus: true,
-                  cursorColor: colorScheme.onSecondaryContainer,
+                  cursorColor: colorScheme.onPrimaryContainer,
                   style: TextStyle(
-                    color: colorScheme.onSecondaryContainer,
+                    color: colorScheme.onPrimaryContainer,
                     fontWeight: FontWeight.w500,
                     fontSize: tagFontsize,
                   ),
@@ -92,14 +92,14 @@ class TagEditPanel extends StatelessWidget {
             height: 24,
             padding: const EdgeInsets.symmetric(horizontal: 12),
             decoration: BoxDecoration(
-              color: colorScheme.secondary.withValues(alpha: 0.82),
+              color: colorScheme.tertiary.withValues(alpha: 0.82),
               borderRadius: BorderRadius.circular(6),
             ),
             child: Center(
               child: Text(
                 tagText,
                 style: TextStyle(
-                  color: colorScheme.onSecondary,
+                  color: colorScheme.onTertiary,
                   fontWeight: FontWeight.w500,
                   fontSize: tagFontsize,
                 ),
