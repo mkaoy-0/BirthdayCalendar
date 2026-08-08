@@ -988,6 +988,8 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                         defaultImagePath: defaultImagePath,
                         onPickDefaultWallpaper: _pickDefaultWallpaper,
                         dateMemos: dateMemos,
+                        dateTags: dateTags,
+                        onTagTap: _openTagSearch,
                         colorScheme: currentColors,
                       ),
                     ),
