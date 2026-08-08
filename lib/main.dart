@@ -677,7 +677,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                                 fontStyle: FontStyle.italic,
                                                 fontFamily: 'Times New Roman',
                                                 color: isToday
-                                                    ? currentColors.onPrimary
+                                                    ? currentColors.onSurface
                                                     : (hasImage ? Colors.white : currentColors.onSurface),
                                                 shadows: hasImage
                                                     ? const [
