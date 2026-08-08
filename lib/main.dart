@@ -168,6 +168,8 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
   int? selectedDay;
   // ★追加：テキスト入力欄を表示するかどうかのフラグ
   bool showTextField = false;
+  // ★追加：右側から出るメニューを開閉するフラグ
+  bool _isMenuOpen = false;
 
   final textController = TextEditingController(); // ★テキスト入力欄のコントローラー
 
@@ -335,6 +337,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
 
     String selectedKey = selectedDay != null ? '$currentMonth-$selectedDay' : '';
     bool hasImage = selectedImages[selectedKey] != null && selectedImages[selectedKey]!.isNotEmpty;
+    final double menuWidth = MediaQuery.of(context).size.width * 0.85;
 
     return Scaffold(
       appBar: AppBar(
@@ -350,295 +353,357 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage> {
         actions: [
           IconButton(
             icon: Icon(
-              Icons.wallpaper,
-              color: defaultImagePath.isNotEmpty ? currentColors.onPrimary : null,
+              Icons.menu,
+              color: currentColors.onPrimary,
             ),
-            tooltip: 'デフォルト壁紙を設定',
-            onPressed: _pickDefaultWallpaper,
+            tooltip: 'メニュー',
+            onPressed: () {
+              setState(() {
+                _isMenuOpen = true;
+              });
+            },
           ),
         ],
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // 【1】月を切り替えるヘッダーエリア
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 15.0),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // [←] ボタン（前の月へ）
-                  IconButton(
-                    icon: const Icon(Icons.arrow_left, size: 30),
-                    onPressed: () {
-                      // アニメーションしながら前のページへ戻す
-                      _pageController.previousPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    },
-                  ),
-                  Text(
-                    '$currentMonth月',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      letterSpacing: 2.0,
-                      fontFamily: 'serif',
-                    ),
-                  ),
-                  // [→] ボタン（次の月へ）
-                  IconButton(
-                    icon: const Icon(Icons.arrow_right, size: 30),
-                    onPressed: () {
-                      // アニメーションしながら次のページへ進める
-                      _pageController.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                      );
-                    },
-                  ),
-                ],
-              ),
-            ), 
-
-            // 【2】日付の一覧エリア ＋ 【3】スマート操作エリア
-            Expanded(
-              child: SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    SizedBox(
-                      height: (MediaQuery.of(context).size.width - 32) / 7 / 0.55 * 5.1,
-                      child: PageView.builder(
-                        // 💡 上で定義したコントローラーをここにセット！
-                        controller: _pageController,
-                        // 💡 itemCountをあえて指定しないことで無限スワイプを可能にします
-                        onPageChanged: (index) {
-                          setState(() {
-                            // 💡 インデックスから「1〜12月」のどれに該当するかを計算する
-                            currentMonth = (index % 12) + 1;
-                            selectedDay = null;
-                            showTextField = false;
-                          });
-                        },
-                        itemBuilder: (context, pageIndex) {
-                          // 現在のページが「何月」にあたるかを計算
-                          int monthForPage = (pageIndex % 12) + 1;
-                          int maxDaysForPage = daysInMonth[monthForPage] ?? 30;
-
-                          return GridView.builder(
-                            shrinkWrap: true,
-                            padding: EdgeInsets.zero,
-                            physics: const NeverScrollableScrollPhysics(),
-                            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                              crossAxisCount: 7,
-                              mainAxisSpacing: 10.0,
-                              crossAxisSpacing: 4.0,
-                              childAspectRatio: 0.55,
-                            ),
-                            itemCount: 35,
-                            itemBuilder: (context, index) {
-                              int dayNumber = index + 1;
-
-                              if (dayNumber > maxDaysForPage) {
-                                return Container(
-                                  decoration: BoxDecoration(
-                                    color: const Color.fromARGB(255, 232, 232, 232),
-                                    borderRadius: BorderRadius.circular(1),
-                                  ),
-                                );
-                              }
-
-                              String key = '$monthForPage-$dayNumber';
-                              String? imagePath = selectedImages[key];
-
-                              bool isToday = now.month == monthForPage && now.day == dayNumber;
-                              bool isSelected = selectedDay == dayNumber && currentMonth == monthForPage;
-
-                              return InkWell(
-                                onTap: () {
-                                  setState(() {
-                                    if (selectedDay == dayNumber) {
-                                      selectedDay = null;
-                                      showTextField = false;
-                                    } else {
-                                      selectedDay = dayNumber;
-                                      showTextField = false;
-                                      textController.text = dateMemos[key] ?? '';
-                                    }
-                                  });
-                                },
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                    border: Border.all(
-                                     // color: const Color.fromARGB(255, 0, 0, 0),
-                                     color: isToday
-                                            ? currentColors.error
-                                            : Colors.black,
-                                      width: isToday ? 3.0 : 0.45,
-                                    ),
-                                    borderRadius: BorderRadius.circular(1),
-                                    color: imagePath == null || imagePath.isEmpty
-                                        ? const Color.fromARGB(0, 205, 205, 205)
-                                        : null,
-                                    image: imagePath != null && imagePath.isNotEmpty 
-                                        ? DecorationImage(
-                                            image: FileImage(File(imagePath)),
-                                            fit: BoxFit.cover,
-                                            colorFilter: ColorFilter.mode(
-                                              Colors.black.withValues(alpha: 0.4),
-                                              BlendMode.srcATop,
-                                            ),
-                                          )
-                                        : null,
-                                  ),
-                                  child: Center(
-                                    child: Text(
-                                      dayNumber.toString().padLeft(2, '0'),
-                                      style: TextStyle(
-                                        fontSize: isSelected ? 18 : 12,
-                                        fontStyle: FontStyle.italic,
-                                        fontFamily: 'Times New Roman',
-                                        color: imagePath == null || imagePath.isEmpty
-                                                ? Colors.black
-                                                : Colors.white,
-                                        shadows: imagePath != null && imagePath.isNotEmpty
-                                            ? const [Shadow(color: Colors.black, blurRadius: 4)]
-                                            : null,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              );
-                            },
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                // 【1】月を切り替えるヘッダーエリア
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 15.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // [←] ボタン（前の月へ）
+                      IconButton(
+                        icon: const Icon(Icons.arrow_left, size: 30),
+                        onPressed: () {
+                          // アニメーションしながら前のページへ戻す
+                          _pageController.previousPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
                           );
                         },
                       ),
-                    ),
-                    
-                    if (selectedDay != null) ...[
-                      const SizedBox(height: 10),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 0.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
-                              decoration: BoxDecoration(
-                                color: const Color.fromARGB(0, 250, 250, 250),
-                                border: Border.all(
-                                  color: const Color.fromARGB(255, 52, 52, 52),
-                                  width: 0.6,
+                      Text(
+                        '$currentMonth月',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          letterSpacing: 2.0,
+                          fontFamily: 'serif',
+                        ),
+                      ),
+                      // [→] ボタン（次の月へ）
+                      IconButton(
+                        icon: const Icon(Icons.arrow_right, size: 30),
+                        onPressed: () {
+                          // アニメーションしながら次のページへ進める
+                          _pageController.nextPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeInOut,
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ), 
+
+                // 【2】日付の一覧エリア ＋ 【3】スマート操作エリア
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        SizedBox(
+                          height: (MediaQuery.of(context).size.width - 32) / 7 / 0.55 * 5.1,
+                          child: PageView.builder(
+                            // 💡 上で定義したコントローラーをここにセット！
+                            controller: _pageController,
+                            // 💡 itemCountをあえて指定しないことで無限スワイプを可能にします
+                            onPageChanged: (index) {
+                              setState(() {
+                                // 💡 インデックスから「1〜12月」のどれに該当するかを計算
+                                currentMonth = (index % 12) + 1;
+                                selectedDay = null;
+                                showTextField = false;
+                              });
+                            },
+                            itemBuilder: (context, pageIndex) {
+                              // 現在のページが「何月」にあたるかを計算
+                              int monthForPage = (pageIndex % 12) + 1;
+                              int maxDaysForPage = daysInMonth[monthForPage] ?? 30;
+
+                              return GridView.builder(
+                                shrinkWrap: true,
+                                padding: EdgeInsets.zero,
+                                physics: const NeverScrollableScrollPhysics(),
+                                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                                  crossAxisCount: 7,
+                                  mainAxisSpacing: 10.0,
+                                  crossAxisSpacing: 4.0,
+                                  childAspectRatio: 0.55,
                                 ),
-                                borderRadius: BorderRadius.circular(1),
-                              ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.edit,
-                                      color: showTextField ? currentColors.primary : Colors.grey[700],
-                                    ),
-                                    onPressed: () {
+                                itemCount: 35,
+                                itemBuilder: (context, index) {
+                                  int dayNumber = index + 1;
+
+                                  if (dayNumber > maxDaysForPage) {
+                                    return Container(
+                                      decoration: BoxDecoration(
+                                        color: const Color.fromARGB(255, 232, 232, 232),
+                                        borderRadius: BorderRadius.circular(1),
+                                      ),
+                                    );
+                                  }
+
+                                  String key = '$monthForPage-$dayNumber';
+                                  String? imagePath = selectedImages[key];
+
+                                  bool isToday = now.month == monthForPage && now.day == dayNumber;
+                                  bool isSelected = selectedDay == dayNumber && currentMonth == monthForPage;
+
+                                  return InkWell(
+                                    onTap: () {
                                       setState(() {
-                                        showTextField = !showTextField;
+                                        if (selectedDay == dayNumber) {
+                                          selectedDay = null;
+                                          showTextField = false;
+                                        } else {
+                                          selectedDay = dayNumber;
+                                          showTextField = false;
+                                          textController.text = dateMemos[key] ?? '';
+                                        }
                                       });
                                     },
-                                  ),
-                                  IconButton(
-                                    icon: Icon(Icons.image, color: Colors.grey[700]),
-                                    onPressed: () => _updateImage(currentMonth, selectedDay!),
-                                  ),
-                                  IconButton(
-                                    icon: Icon(
-                                      Icons.delete, 
-                                      color: hasImage ? currentColors.error : Colors.grey[300],
+                                    child: Container(
+                                      decoration: BoxDecoration(
+                                        border: Border.all(
+                                         // color: const Color.fromARGB(255, 0, 0, 0),
+                                         color: isToday
+                                                ? currentColors.error
+                                                : Colors.black,
+                                          width: isToday ? 3.0 : 0.45,
+                                        ),
+                                        borderRadius: BorderRadius.circular(1),
+                                        color: imagePath == null || imagePath.isEmpty
+                                            ? const Color.fromARGB(0, 205, 205, 205)
+                                            : null,
+                                        image: imagePath != null && imagePath.isNotEmpty 
+                                            ? DecorationImage(
+                                                image: FileImage(File(imagePath)),
+                                                fit: BoxFit.cover,
+                                                colorFilter: ColorFilter.mode(
+                                                  Colors.black.withValues(alpha: 0.4),
+                                                  BlendMode.srcATop,
+                                                ),
+                                              )
+                                            : null,
+                                      ),
+                                      child: Center(
+                                        child: Text(
+                                          dayNumber.toString().padLeft(2, '0'),
+                                          style: TextStyle(
+                                            fontSize: isSelected ? 18 : 12,
+                                            fontStyle: FontStyle.italic,
+                                            fontFamily: 'Times New Roman',
+                                            color: imagePath == null || imagePath.isEmpty
+                                                    ? Colors.black
+                                                    : Colors.white,
+                                            shadows: imagePath != null && imagePath.isNotEmpty
+                                                ? const [Shadow(color: Colors.black, blurRadius: 4)]
+                                                : null,
+                                          ),
+                                        ),
+                                      ),
                                     ),
-                                    onPressed: hasImage ? () => _deleteImage(currentMonth, selectedDay!) : null,
+                                  );
+                                },
+                              );
+                            },
+                          ),
+                        ),
+                        
+                        if (selectedDay != null) ...[
+                          const SizedBox(height: 10),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 0.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 2.0),
+                                  decoration: BoxDecoration(
+                                    color: const Color.fromARGB(0, 250, 250, 250),
+                                    border: Border.all(
+                                      color: const Color.fromARGB(255, 52, 52, 52),
+                                      width: 0.6,
+                                    ),
+                                    borderRadius: BorderRadius.circular(1),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.edit,
+                                          color: showTextField ? currentColors.primary : Colors.grey[700],
+                                        ),
+                                        onPressed: () {
+                                          setState(() {
+                                            showTextField = !showTextField;
+                                          });
+                                        },
+                                      ),
+                                      IconButton(
+                                        icon: Icon(Icons.image, color: Colors.grey[700]),
+                                        onPressed: () => _updateImage(currentMonth, selectedDay!),
+                                      ),
+                                      IconButton(
+                                        icon: Icon(
+                                          Icons.delete, 
+                                          color: hasImage ? currentColors.error : Colors.grey[300],
+                                        ),
+                                        onPressed: hasImage ? () => _deleteImage(currentMonth, selectedDay!) : null,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                
+                                Padding(
+                                  padding: const EdgeInsets.only(right: 4.0),
+                                  child: Text(
+                                    '${currentMonth.toString().padLeft(2, '0')}${selectedDay!.toString().padLeft(2, '0')}', 
+                                    style: TextStyle(
+                                      fontSize: 22,
+                                      fontWeight: FontWeight.bold,
+                                      fontStyle: FontStyle.italic,
+                                      fontFamily: 'Times New Roman',
+                                      color: const Color.fromARGB(255, 82, 82, 82),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          if (showTextField)
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 8.0, left: 4.0, right: 4.0),
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: TextField(
+                                      controller: textController,
+                                      autofocus: true,
+                                      style: const TextStyle(fontFamily: 'serif', fontSize: 16),
+                                      decoration: const InputDecoration(
+                                        hintText: 'メモを入力',
+                                        isDense: true,
+                                        contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                                        border: UnderlineInputBorder(),
+                                        enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
+                                        focusedBorder: UnderlineInputBorder(
+                                          borderSide: BorderSide(color: Color.fromARGB(255, 117, 117, 117), width: 1.5),
+                                        ),
+                                      ),
+                                      onChanged: (text) => _saveMemo(currentMonth, selectedDay!, text),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 8),
+                                  IconButton(
+                                    icon: const Icon(Icons.check, color: Color.fromARGB(255, 111, 111, 111)),
+                                    onPressed: () {
+                                      setState(() {
+                                        showTextField = false;
+                                      });
+                                    },
                                   ),
                                 ],
                               ),
                             ),
-                            
-                            Padding(
-                              padding: const EdgeInsets.only(right: 4.0),
-                              child: Text(
-                                '${currentMonth.toString().padLeft(2, '0')}${selectedDay!.toString().padLeft(2, '0')}', 
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
-                                  fontStyle: FontStyle.italic,
-                                  fontFamily: 'Times New Roman',
-                                  color: const Color.fromARGB(255, 82, 82, 82),
+
+                          if (dateMemos['$currentMonth-$selectedDay'] != null && dateMemos['$currentMonth-$selectedDay']!.isNotEmpty)
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: Padding(
+                                padding: const EdgeInsets.only(top: 10.0, bottom: 16.0, left: 4.0),
+                                child: Text(
+                                  dateMemos['$currentMonth-$selectedDay']!,
+                                  style: TextStyle(
+                                    fontSize: 15,
+                                    fontFamily: 'serif',
+                                    color: Colors.grey.shade700,
+                                    fontWeight: FontWeight.bold,
+                                  ),
                                 ),
                               ),
                             ),
-                          ],
+                        ],
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          AnimatedPositioned(
+            duration: const Duration(milliseconds: 250),
+            curve: Curves.easeOutCubic,
+            top: 0,
+            bottom: 0,
+            right: _isMenuOpen ? 0 : -menuWidth,
+            width: menuWidth,
+            child: Material(
+              elevation: 12,
+              color: Theme.of(context).colorScheme.surface,
+              child: SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8.0, right: 8.0),
+                      child: Align(
+                        alignment: Alignment.topRight,
+                        child: IconButton(
+                          icon: const Icon(Icons.close),
+                          tooltip: '閉じる',
+                          onPressed: () {
+                            setState(() {
+                              _isMenuOpen = false;
+                            });
+                          },
                         ),
                       ),
-
-                      if (showTextField)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 8.0, left: 4.0, right: 4.0),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: TextField(
-                                  controller: textController,
-                                  autofocus: true,
-                                  style: const TextStyle(fontFamily: 'serif', fontSize: 16),
-                                  decoration: const InputDecoration(
-                                    hintText: 'メモを入力',
-                                    isDense: true,
-                                    contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                                    border: UnderlineInputBorder(),
-                                    enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: Colors.grey)),
-                                    focusedBorder: UnderlineInputBorder(
-                                      borderSide: BorderSide(color: Color.fromARGB(255, 117, 117, 117), width: 1.5),
-                                    ),
-                                  ),
-                                  onChanged: (text) => _saveMemo(currentMonth, selectedDay!, text),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                icon: const Icon(Icons.check, color: Color.fromARGB(255, 111, 111, 111)),
-                                onPressed: () {
-                                  setState(() {
-                                    showTextField = false;
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
+                    ),
+                    const SizedBox(height: 20),
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                      child: TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: Theme.of(context).colorScheme.primaryContainer,
+                          foregroundColor: Theme.of(context).colorScheme.onPrimaryContainer,
+                          padding: const EdgeInsets.symmetric(vertical: 16.0),
+                          textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
                         ),
-
-                      if (dateMemos['$currentMonth-$selectedDay'] != null && dateMemos['$currentMonth-$selectedDay']!.isNotEmpty)
-                        Align(
-                          alignment: Alignment.centerLeft,
-                          child: Padding(
-                            padding: const EdgeInsets.only(top: 10.0, bottom: 16.0, left: 4.0),
-                            child: Text(
-                              dateMemos['$currentMonth-$selectedDay']!,
-                              style: TextStyle(
-                                fontSize: 15,
-                                fontFamily: 'serif',
-                                color: Colors.grey.shade700,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
+                        onPressed: () {
+                          _pickDefaultWallpaper();
+                        },
+                        child: Text(
+                          defaultImagePath.isNotEmpty
+                              ? 'デフォルト壁紙を変更'
+                              : 'デフォルト壁紙を設定',
                         ),
-                    ],
+                      ),
+                    ),
                   ],
                 ),
               ),
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
