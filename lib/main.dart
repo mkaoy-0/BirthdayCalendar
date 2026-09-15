@@ -472,7 +472,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     _tagSearchController?.reverse();
   }
 
-  Future<void> _toggleTopPanel({required bool search}) async {
+  void _toggleTopPanel({required bool search}) {
     FocusScope.of(context).unfocus();
 
     final isCurrentPanelOpen = search ? _isSearchOpen : _isMenuOpen;
@@ -482,16 +482,6 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
         _isSearchOpen = false;
       });
       return;
-    }
-
-    final hasOtherPanelOpen = _isMenuOpen || _isSearchOpen;
-    if (hasOtherPanelOpen) {
-      setState(() {
-        _isMenuOpen = false;
-        _isSearchOpen = false;
-      });
-      await Future<void>.delayed(const Duration(milliseconds: 250));
-      if (!mounted) return;
     }
 
     setState(() {
