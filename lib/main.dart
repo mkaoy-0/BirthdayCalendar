@@ -7,8 +7,8 @@ import 'calendar_storage_service.dart';
 import 'theme_service.dart'; // ThemeServiceのエラー対策
 import 'notification_service.dart';
 import 'wallpaper_service.dart';
+import 'selected_date_panel.dart';
 import 'search_menu_panel.dart';
-import 'tag_edit_panel.dart';
 import 'tag_search_panel.dart';
 
 void main() async {
@@ -782,7 +782,168 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                             ),
                           ),
 
-                          if (selectedDay != null) ...[
+                          if (selectedDay != null)
+                            SelectedDatePanel(
+                              month: currentMonth,
+                              day: selectedDay!,
+                              memo: dateMemos[selectedKey] ?? '',
+                              tags: dateTags[selectedKey] ?? [],
+                              hasImage: hasImage,
+                              isEditingMemo: showTextField,
+                              isEditingTags: showTagEditor,
+                              editingTagIndex: editingTagIndex,
+                              colorScheme: currentColors,
+                              memoController: textController,
+                              tagController: tagController,
+                              tagFocusNode: tagFocusNode,
+                              suggestionTags: dateTags.values
+                                  .expand((tags) => tags)
+                                  .toList(),
+                              onToggleMemoEditing: () {
+                                setState(() {
+                                  showTextField = !showTextField;
+                                  if (showTextField) {
+                                    textController.text =
+                                        dateMemos[selectedKey] ?? '';
+                                  }
+                                });
+                              },
+                              onMemoChanged: (text) => _saveMemo(
+                                currentMonth,
+                                selectedDay!,
+                                text,
+                              ),
+                              onMemoSubmitted: (text) {
+                                _saveMemo(currentMonth, selectedDay!, text);
+                                setState(() => showTextField = false);
+                              },
+                              onSaveMemo: () async {
+                                await _saveMemo(
+                                  currentMonth,
+                                  selectedDay!,
+                                  textController.text,
+                                );
+                                if (mounted) {
+                                  setState(() => showTextField = false);
+                                }
+                              },
+                              onUpdateImage: () => _updateImage(
+                                currentMonth,
+                                selectedDay!,
+                              ),
+                              onDeleteImage: () => _confirmDeleteImage(
+                                currentMonth,
+                                selectedDay!,
+                              ),
+                              onToggleTagEditing: () async {
+                                if (showTagEditor) {
+                                  final tags = List<String>.from(
+                                    dateTags[selectedKey] ?? [],
+                                  );
+                                  final newText = tagController.text.trim();
+                                  if (editingTagIndex != null) {
+                                    if (editingTagIndex! < tags.length) {
+                                      if (newText.isEmpty) {
+                                        tags.removeAt(editingTagIndex!);
+                                      } else {
+                                        tags[editingTagIndex!] = newText;
+                                      }
+                                    } else if (editingTagIndex == tags.length &&
+                                        newText.isNotEmpty) {
+                                      tags.add(newText);
+                                    }
+                                  } else if (newText.isNotEmpty) {
+                                    tags.add(newText);
+                                  }
+                                  await _saveTag(
+                                    currentMonth,
+                                    selectedDay!,
+                                    tags,
+                                  );
+                                  if (!mounted) return;
+                                  setState(() {
+                                    showTagEditor = false;
+                                    editingTagIndex = null;
+                                    tagController.clear();
+                                  });
+                                  FocusScope.of(context).unfocus();
+                                } else {
+                                  setState(() {
+                                    showTagEditor = true;
+                                    editingTagIndex = null;
+                                    tagController.clear();
+                                  });
+                                }
+                              },
+                              onTagChanged: (_) {},
+                              onTagButtonTap: (index) {
+                                final tags = dateTags[selectedKey] ?? [];
+                                setState(() {
+                                  showTagEditor = true;
+                                  editingTagIndex = index;
+                                  tagController.text = index < tags.length
+                                      ? tags[index]
+                                      : '';
+                                });
+                                WidgetsBinding.instance.addPostFrameCallback(
+                                  (_) => tagFocusNode.requestFocus(),
+                                );
+                              },
+                              onTagSuggestionTap: (suggestion) async {
+                                final tags = List<String>.from(
+                                  dateTags[selectedKey] ?? [],
+                                );
+                                if (editingTagIndex == null) return;
+                                if (editingTagIndex! < tags.length) {
+                                  tags[editingTagIndex!] = suggestion;
+                                } else if (editingTagIndex == tags.length) {
+                                  tags.add(suggestion);
+                                } else {
+                                  return;
+                                }
+                                await _saveTag(
+                                  currentMonth,
+                                  selectedDay!,
+                                  tags,
+                                );
+                                if (!mounted) return;
+                                setState(() {
+                                  showTagEditor = false;
+                                  editingTagIndex = null;
+                                  tagController.clear();
+                                });
+                                FocusScope.of(context).unfocus();
+                              },
+                              onTagTap: _openTagSearch,
+                              onSubmitTag: () async {
+                                final tags = List<String>.from(
+                                  dateTags[selectedKey] ?? [],
+                                );
+                                final newText = tagController.text.trim();
+                                if (editingTagIndex != null &&
+                                    editingTagIndex! < tags.length) {
+                                  if (newText.isEmpty) {
+                                    tags.removeAt(editingTagIndex!);
+                                  } else {
+                                    tags[editingTagIndex!] = newText;
+                                  }
+                                } else if (newText.isNotEmpty) {
+                                  tags.add(newText);
+                                }
+                                await _saveTag(
+                                  currentMonth,
+                                  selectedDay!,
+                                  tags,
+                                );
+                                if (!mounted) return;
+                                setState(() {
+                                  showTagEditor = false;
+                                  editingTagIndex = null;
+                                });
+                                FocusScope.of(context).unfocus();
+                              },
+                            ),
+                          /*
                             const SizedBox(height: 10),
                             Padding(
                               padding: const EdgeInsets.symmetric(
@@ -1124,7 +1285,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                   ),
                                 ],
                               ),
-                          ],
+                          */
                         ],
                       ),
                     ),
