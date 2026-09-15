@@ -962,6 +962,36 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                       onTagChanged: (text) {
                                         // controller already tracks text
                                       },
+                                      suggestionTags: dateTags.values
+                                          .expand((tags) => tags)
+                                          .toList(),
+                                      onTagSuggestionTap: (suggestion) async {
+                                        final tags = List<String>.from(
+                                          dateTags[selectedKey] ?? [],
+                                        );
+                                        if (editingTagIndex == null) return;
+
+                                        if (editingTagIndex! < tags.length) {
+                                          tags[editingTagIndex!] = suggestion;
+                                        } else if (editingTagIndex == tags.length) {
+                                          tags.add(suggestion);
+                                        } else {
+                                          return;
+                                        }
+
+                                        await _saveTag(
+                                          currentMonth,
+                                          selectedDay!,
+                                          tags,
+                                        );
+                                        if (!context.mounted) return;
+                                        setState(() {
+                                          showTagEditor = false;
+                                          editingTagIndex = null;
+                                          tagController.clear();
+                                        });
+                                        FocusScope.of(context).unfocus();
+                                      },
                                       onTagButtonTap: (index) {
                                         final tags =
                                             dateTags[selectedKey] ?? [];
