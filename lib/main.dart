@@ -623,7 +623,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
           ),
           IconButton(
             icon: Icon(
-              _isMenuOpen ? Icons.close : Icons.menu,
+              _isMenuOpen ? Icons.close : Icons.image,
               color: currentColors.onPrimary,
             ),
             tooltip: 'メニュー',

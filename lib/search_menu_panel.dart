@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 
 class MenuSearchPanel extends StatefulWidget {
@@ -103,12 +105,6 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: TextButton.icon(
-                icon: Icon(
-                  Icons.image,
-                  color: widget.colorScheme.onPrimaryContainer.withValues(
-                    alpha: 0.75,
-                  ),
-                ),
                 label: Text(
                   widget.defaultImagePath.isNotEmpty
                       ? 'デフォルト壁紙を変更'
@@ -130,6 +126,37 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                   ),
                 ),
                 onPressed: widget.onPickDefaultWallpaper,
+              ),
+            ),
+          // ボタンと画像の間の余白を小さくしたい場合は、ここ（または上のSizedBox）を調整
+          if (!widget.showSearch &&
+              widget.defaultImagePath.isNotEmpty &&
+              File(widget.defaultImagePath).existsSync())
+            Expanded(
+              child: Padding(
+                // 画像の大きさ（余白で調整）
+                padding: const EdgeInsets.fromLTRB(45, 40, 45, 16),
+                child: Align(
+                  alignment: Alignment.topCenter, // 中央寄せではなく上部に寄せる
+                  child: AspectRatio(
+                    aspectRatio: 9 / 16,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        Image.file(
+                          File(widget.defaultImagePath),
+                          fit: BoxFit.contain,
+                          errorBuilder: (context, error, stackTrace) =>
+                              const SizedBox.shrink(),
+                        ),
+                        // 半透明のフィルター（alphaの値で暗さを調整）
+                        Container(
+                          color: widget.colorScheme.primary.withValues(alpha: 0.2),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
               ),
             ),
           if (widget.showSearch) ...[
@@ -235,7 +262,7 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                                 decoration: BoxDecoration(
                                   color: isTag
                                       ? widget.colorScheme.primaryContainer
-                                            .withValues(alpha: 0.6) // タグの背景色
+                                          .withValues(alpha: 0.6) // タグの背景色
                                       : widget.colorScheme.onPrimary.withValues(
                                           alpha: 0.12,
                                         ),
