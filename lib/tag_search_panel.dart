@@ -110,7 +110,7 @@ class TagSearchPanel extends StatelessWidget {
                           ),
                         )
                       : ListView.separated(
-                          padding: const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 40.0),
+                          padding: const EdgeInsets.fromLTRB(12.0, 12.0, 12.0, 20.0),
                           itemCount: keys.length,
                           separatorBuilder: (_, __) => const Divider(),
                           itemBuilder: (context, index) {

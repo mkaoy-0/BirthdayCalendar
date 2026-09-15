@@ -60,12 +60,12 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
           final paddedDate = parts.length == 2
               ? '${parts[0].padLeft(2, '0')}${parts[1].padLeft(2, '0')}'
               : key.replaceAll('-', '');
-            results.add({
-              'kind': 'memo',
-              'key': key,
-              'date': paddedDate,
-              'text': memo,
-            });
+          results.add({
+            'kind': 'memo',
+            'key': key,
+            'date': paddedDate,
+            'text': memo,
+          });
         }
       });
 
@@ -103,7 +103,12 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: TextButton.icon(
-                icon: Icon(Icons.image, color: widget.colorScheme.onPrimaryContainer.withValues(alpha: 0.75)),
+                icon: Icon(
+                  Icons.image,
+                  color: widget.colorScheme.onPrimaryContainer.withValues(
+                    alpha: 0.75,
+                  ),
+                ),
                 label: Text(
                   widget.defaultImagePath.isNotEmpty
                       ? 'デフォルト壁紙を変更'
@@ -115,8 +120,10 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                   ),
                 ),
                 style: TextButton.styleFrom(
-                  backgroundColor: widget.colorScheme.primaryContainer.withValues(alpha: 0.8),
-                  foregroundColor: widget.colorScheme.onPrimaryContainer.withValues(alpha: 0.75),
+                  backgroundColor: widget.colorScheme.primaryContainer
+                      .withValues(alpha: 0.8),
+                  foregroundColor: widget.colorScheme.onPrimaryContainer
+                      .withValues(alpha: 0.75),
                   padding: const EdgeInsets.symmetric(vertical: 16.0),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
@@ -144,11 +151,26 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                     fontFamily: 'OpenSans',
                   ),
                   filled: true,
-                  fillColor: widget.colorScheme.onPrimary.withValues(alpha: 0.12),
-                  prefixIcon: Icon(
+                  fillColor: widget.colorScheme.onPrimary.withValues(
+                    alpha: 0.12,
+                  ),
+                  prefixIcon: Icon(   // 左端の虫眼鏡アイコン
                     Icons.search,
                     color: widget.colorScheme.onPrimary.withValues(alpha: 0.8),
                   ),
+                  // 右端の×ボタン。テキストがあるときのみ表示
+                  suffixIcon: searchController.text.isEmpty
+                      ? null
+                      : IconButton(
+                          icon: const Icon(Icons.clear),
+                          color: widget.colorScheme.onPrimary.withValues(alpha: 0.6),
+                          iconSize: 18,
+                          tooltip: '検索文字を消去',
+                          onPressed: () {
+                            searchController.clear();
+                            _runSearch('');
+                          },
+                        ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12.0),
                     borderSide: BorderSide.none,
@@ -162,128 +184,132 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: searchController.text.isEmpty
-                  ? const SizedBox.shrink()
-                  : searchResults.isEmpty
-                  ? Align(
-                      alignment: Alignment.topCenter,
-                      child: Padding(
-                        padding: const EdgeInsets.only(top: 8.0),
-                        child: Text(
-                          '一致する結果はありません',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            color: widget.colorScheme.onPrimary.withValues(
-                              alpha: 0.75,
+                    ? const SizedBox.shrink()
+                    : searchResults.isEmpty
+                    ? Align(
+                        alignment: Alignment.topCenter,
+                        child: Padding(
+                          padding: const EdgeInsets.only(top: 8.0),
+                          child: Text(
+                            '一致する結果はありません',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              color: widget.colorScheme.onPrimary.withValues(
+                                alpha: 0.75,
+                              ),
+                              fontSize: searchResultFontsize,
+                              fontFamily: 'OpenSans',
                             ),
-                            fontSize: searchResultFontsize,
-                            fontFamily: 'OpenSans',
                           ),
                         ),
-                      ),
-                    )
-                  : ListView.separated(
-                      padding: const EdgeInsets.only(bottom: 104.0),
-                      itemCount: searchResults.length,
-                      // アイテム間のスペースを設定
-                      separatorBuilder: (context, index) =>
-                          const SizedBox(height: 10),
-                      itemBuilder: (context, index) {
-                        final result = searchResults[index];
-                        final isTag = result['kind'] == 'tag';
-                        final cardWidth =
-                            MediaQuery.of(context).size.width * 0.82;
-                        return Align(
-                          alignment: Alignment.topCenter,
-                          child: InkWell(
-                            borderRadius: BorderRadius.circular(12.0),
-                            onTap: () {
-                              searchFocusNode.unfocus();
-                              if (isTag) {
-                                widget.onTagTap(result['text'] ?? '');
-                              } else {
-                                widget.onDateTap(result['key'] ?? '');
-                              }
-                            },
-                            child: Container(
-                              width: cardWidth,
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 16.0,
-                                vertical: 13.0,
-                              ),
-                              decoration: BoxDecoration(
-                                color: isTag
-                                    ? widget.colorScheme.primaryContainer.withValues(alpha: 0.6) // タグの背景色
-                                    : widget.colorScheme.onPrimary.withValues(
-                                        alpha: 0.12,
-                                      ),
-                                borderRadius: BorderRadius.circular(12.0),
-                              ),
-                              child: isTag
-                                  ? Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
-                                        Icon(
-                                          Icons.label,
-                                          color: widget.colorScheme.onPrimaryContainer.withValues(alpha: 0.75),
-                                          size: 18,
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.only(bottom: 104.0),
+                        itemCount: searchResults.length,
+                        // アイテム間のスペースを設定
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(height: 10),
+                        itemBuilder: (context, index) {
+                          final result = searchResults[index];
+                          final isTag = result['kind'] == 'tag';
+                          final cardWidth =
+                              MediaQuery.of(context).size.width * 0.82;
+                          return Align(
+                            alignment: Alignment.topCenter,
+                            child: InkWell(
+                              borderRadius: BorderRadius.circular(12.0),
+                              onTap: () {
+                                searchFocusNode.unfocus();
+                                if (isTag) {
+                                  widget.onTagTap(result['text'] ?? '');
+                                } else {
+                                  widget.onDateTap(result['key'] ?? '');
+                                }
+                              },
+                              child: Container(
+                                width: cardWidth,
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 16.0,
+                                  vertical: 13.0,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: isTag
+                                      ? widget.colorScheme.primaryContainer
+                                            .withValues(alpha: 0.6) // タグの背景色
+                                      : widget.colorScheme.onPrimary.withValues(
+                                          alpha: 0.12,
                                         ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            result['text'] ?? '',
-                                            style: TextStyle(
-                                              color:
-                                                  widget.colorScheme
-                                                      .onPrimaryContainer,
-                                              fontFamily: 'Georgia',
-                                              fontSize: searchResultFontsize,
-                                            ),
-                                            softWrap: true,
-                                            overflow: TextOverflow.visible,
-                                          ),
-                                        ),
-                                      ],
-                                    )
-                                  : Text.rich(
-                                      TextSpan(
+                                  borderRadius: BorderRadius.circular(12.0),
+                                ),
+                                child: isTag
+                                    ? Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          TextSpan(
-                                            text: '${result['date'] ?? ''}    ',
-                                            style: TextStyle(
-                                              color:
-                                                  widget.colorScheme.onPrimary,
-                                              fontFamily: 'Times New Roman',
-                                              fontSize:
-                                                  searchResultFontsize + 2,
-                                              fontWeight: FontWeight.bold,
-                                              fontStyle: FontStyle.italic,
-                                            ),
+                                          Icon(
+                                            Icons.label,
+                                            color: widget
+                                                .colorScheme
+                                                .onPrimaryContainer
+                                                .withValues(alpha: 0.75),
+                                            size: 18,
                                           ),
-                                          TextSpan(
-                                            text: (result['text'] ?? '')
-                                                .replaceAll(
-                                              '\n',
-                                              ' ',
-                                            ),
-                                            style: TextStyle(
-                                              color:
-                                                  widget.colorScheme.onPrimary,
-                                              fontFamily: 'Georgia',
-                                              fontSize: searchResultFontsize,
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: Text(
+                                              result['text'] ?? '',
+                                              style: TextStyle(
+                                                color: widget
+                                                    .colorScheme
+                                                    .onPrimaryContainer,
+                                                fontFamily: 'Georgia',
+                                                fontSize: searchResultFontsize,
+                                              ),
+                                              softWrap: true,
+                                              overflow: TextOverflow.visible,
                                             ),
                                           ),
                                         ],
+                                      )
+                                    : Text.rich(
+                                        TextSpan(
+                                          children: [
+                                            TextSpan(
+                                              text:
+                                                  '${result['date'] ?? ''}    ',
+                                              style: TextStyle(
+                                                color: widget
+                                                    .colorScheme
+                                                    .onPrimary,
+                                                fontFamily: 'Times New Roman',
+                                                fontSize:
+                                                    searchResultFontsize + 2,
+                                                fontWeight: FontWeight.bold,
+                                                fontStyle: FontStyle.italic,
+                                              ),
+                                            ),
+                                            TextSpan(
+                                              text: (result['text'] ?? '')
+                                                  .replaceAll('\n', ' '),
+                                              style: TextStyle(
+                                                color: widget
+                                                    .colorScheme
+                                                    .onPrimary,
+                                                fontFamily: 'Georgia',
+                                                fontSize: searchResultFontsize,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        textAlign: TextAlign.left,
                                       ),
-                                      maxLines: 1,
-                                      overflow: TextOverflow.ellipsis,
-                                      textAlign: TextAlign.left,
-                                    ),
+                              ),
                             ),
-                          ),
-                        );
-                      },
-                    ),
+                          );
+                        },
+                      ),
               ),
             ),
           ],
