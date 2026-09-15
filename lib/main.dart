@@ -424,6 +424,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                   dateTags: dateTags,
                   dateMemos: dateMemos,
                   onClose: _closeTagSearch,
+                  onDateTap: _selectDateFromSearch,
                   colorScheme: cs,
                 ),
               ),
@@ -439,6 +440,47 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
   void _closeTagSearch() {
     if (_tagSearchOverlay == null) return;
     _tagSearchController?.reverse();
+  }
+
+  Future<void> _selectDateFromSearch(String key) async {
+    final parts = key.split('-');
+    if (parts.length != 2) return;
+
+    final month = int.tryParse(parts[0]);
+    final day = int.tryParse(parts[1]);
+    final maxDays = month == null ? null : daysInMonth[month];
+    if (month == null || day == null || maxDays == null || day < 1 || day > maxDays) {
+      return;
+    }
+
+    _closeTagSearch();
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _isMenuOpen = false;
+      currentMonth = month;
+      selectedDay = null;
+      showTextField = false;
+      showTagEditor = false;
+      editingTagIndex = null;
+      textController.clear();
+      tagController.clear();
+    });
+
+    final targetPage = 1200 + month - 1;
+    if (_pageController.hasClients && _pageController.page?.round() != targetPage) {
+      await _pageController.animateToPage(
+        targetPage,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+      );
+    }
+
+    if (!mounted) return;
+    setState(() {
+      currentMonth = month;
+      selectedDay = day;
+      textController.text = dateMemos[key] ?? '';
+    });
   }
 
   @override
@@ -1075,6 +1117,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                         dateMemos: dateMemos,
                         dateTags: dateTags,
                         onTagTap: _openTagSearch,
+                        onDateTap: _selectDateFromSearch,
                         colorScheme: currentColors,
                       ),
                     ),
