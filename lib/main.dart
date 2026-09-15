@@ -2,111 +2,29 @@ import 'dart:io'; // ファイルを扱う用
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart'; // 画像選択用
 import 'package:image_cropper/image_cropper.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:async_wallpaper/async_wallpaper.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:dynamic_color/dynamic_color.dart'; // DynamicColorBuilderのエラー対策
+import 'background_task.dart';
+import 'calendar_storage_service.dart';
 import 'theme_service.dart'; // ThemeServiceのエラー対策
 import 'notification_service.dart';
 import 'search_menu_panel.dart';
 import 'tag_edit_panel.dart';
 import 'tag_search_panel.dart';
 
-// 裏方タスクの名前を定義
-const String wallpaperTaskName = "com.example.dailyWallpaperTask";
-const String defaultWallpaperKey = "default_wallpaper_path"; // デフォルト壁紙用の保存キー
-
-@pragma('vm:entry-point') // 裏で動くコードであることをFlutterに示す
-void callbackDispatcher() {
-  Workmanager().executeTask((task, inputData) async {
-    WidgetsFlutterBinding.ensureInitialized();
-    await NotificationService.init(requestPermission: false);
-
-    // 現在の月と日を取得
-    final now = DateTime.now();
-    String key = "${now.month}-${now.day}";
-    String lastUpdatedKey = "last_updated_date"; // 最後に壁紙を変えた日を記録するキー
-
-    // スマホの保存庫を開く
-    final prefs = await SharedPreferences.getInstance();
-
-    // もし最後に壁紙を変えた日が今日なら、もう0時の仕事は終わっているので何もせず終了する
-    String? lastUpdated = prefs.getString(lastUpdatedKey);
-    if (lastUpdated == key) {
-      return Future.value(true);
-    }
-
-    // ======= 毎朝のメモ通知処理 =======
-    // 保存庫から「memo_月-日」のデータを狙い撃ちで読み込む
-    String memoKey = "memo_$key";
-    String? todayMemo = prefs.getString(memoKey);
-
-    // もし今日の日付にメモが書かれていたら、通知を送信する
-    if (todayMemo != null && todayMemo.isNotEmpty) {
-      final int targetHour = 0;
-      final int targetMinute = 0;
-      final String formattedDate = '${now.month}/${now.day}';
-      final String notificationText = '$formattedDateは$todayMemoの誕生日です！おめでとう🎉';
-      if (now.hour > targetHour ||
-          (now.hour == targetHour && now.minute >= targetMinute)) {
-        await NotificationService.showMemoNotification(notificationText);
-      } else {
-        await NotificationService.scheduleDailyNotification(
-          'HAPPY BIRTHDAY🎉',
-          notificationText,
-          targetHour,
-          targetMinute,
-        );
-      }
-    }
-    // ================================================
-
-    String? imagePath = prefs.getString(key);
-
-    // もし今日の日付が空っぽなら、デフォルト壁紙のパスを読み込む
-    if (imagePath == null || imagePath.isEmpty) {
-      imagePath = prefs.getString(defaultWallpaperKey);
-    }
-
-    // 3もし今日の日付に画像が登録されていたら、壁紙を変更する
-    if (imagePath != null && imagePath.isNotEmpty) {
-      try {
-        await AsyncWallpaper.setWallpaper(
-          WallpaperRequest(
-            target: WallpaperTarget.home, // ホーム画面に設定
-            sourceType: WallpaperSourceType.file, // ファイルから読み込む
-            source: imagePath, // 画像のパス
-            goToHome: false,
-          ),
-        );
-
-        // 壁紙の変更に成功したら、今日の日付をスタンプとしてスマホに保存する
-        await prefs.setString(lastUpdatedKey, key);
-      } catch (e) {
-        debugPrint("壁紙の自動変更に失敗しました: $e");
-      }
-    }
-    return Future.value(true);
-  });
-}
-
 void main() async {
-  // Flutterの初期化を確実に入力
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 通知システムの起動設定
   await NotificationService.init();
 
-  // WorkManager（裏方システム）の初期化
   await Workmanager().initialize(callbackDispatcher);
 
-  // 毎日定期的に裏でタスクを実行するようにOSに予約
   await Workmanager().registerPeriodicTask(
-    "1",
+    '1',
     wallpaperTaskName,
-    frequency: const Duration(minutes: 15), // 15分ごとに今日用の画像がないか裏でチェックしに行く
-    existingWorkPolicy:
-        ExistingPeriodicWorkPolicy.update, // すでに同じタスクがあるときは上書きする
+    frequency: const Duration(minutes: 15),
+    existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
   );
 
   runApp(const MyApp());
@@ -176,6 +94,7 @@ class WallpaperCalendarPage extends StatefulWidget {
 
 class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     with SingleTickerProviderStateMixin {
+  final CalendarStorageService _storage = CalendarStorageService();
   late final PageController _pageController = PageController(
     initialPage: 1200 + currentMonth - 1,
   );
@@ -261,33 +180,13 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
 
   // スマホからデータを読み込む関数
   Future<void> _loadSavedImages() async {
-    final prefs = await SharedPreferences.getInstance();
-    // スマホ内に保存されているすべての「キー（月-日）」を取得
-    final keys = prefs.getKeys();
-
+    final data = await _storage.load();
+    if (!mounted) return;
     setState(() {
-      for (String key in keys) {
-        if (key == defaultWallpaperKey) {
-          defaultImagePath = prefs.getString(key) ?? ''; // デフォルト壁紙のパスを読み込む
-        } else if (key.contains('memo_')) {
-          String dateKey = key.replaceFirst('memo_', '');
-          dateMemos[dateKey] = prefs.getString(key) ?? ''; // メモのデータを読み込む
-        } else if (key.contains('tag_')) {
-          String dateKey = key.replaceFirst('tag_', '');
-          final savedTags = prefs.getStringList('tag_$dateKey');
-          if (savedTags != null) {
-            dateTags[dateKey] = savedTags;
-          } else {
-            final singleTag = prefs.getString('tag_$dateKey');
-            if (singleTag != null && singleTag.isNotEmpty) {
-              dateTags[dateKey] = [singleTag];
-            }
-          }
-        } else {
-          selectedImages[key] =
-              prefs.getString(key) ?? ''; // それ以外は画像のデータとして読み込む
-        }
-      }
+      selectedImages.addAll(data.selectedImages);
+      dateMemos.addAll(data.dateMemos);
+      dateTags.addAll(data.dateTags);
+      defaultImagePath = data.defaultImagePath;
     });
   }
 
@@ -317,8 +216,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     if (image != null) {
       String? croppedPath = await _cropImage(image.path, 'デフォルト壁紙の切り抜き');
       if (croppedPath != null) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString(defaultWallpaperKey, croppedPath);
+        await _storage.saveDefaultImage(croppedPath);
 
         setState(() {
           defaultImagePath = croppedPath;
@@ -339,9 +237,8 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     if (image != null) {
       String? croppedPath = await _cropImage(image.path, '壁紙サイズに切り抜き');
       if (croppedPath != null) {
-        final prefs = await SharedPreferences.getInstance();
         String key = '$month-$day';
-        await prefs.setString(key, croppedPath); // 切り抜かれた画像のパスを保存
+        await _storage.saveImage(key, croppedPath);
 
         setState(() {
           selectedImages[key] = croppedPath;
@@ -372,9 +269,8 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
 
   // 画像を消去する関数
   Future<void> _deleteImage(int month, int day) async {
-    final prefs = await SharedPreferences.getInstance();
     String key = '$month-$day';
-    await prefs.remove(key); // スマホから削除
+    await _storage.deleteImage(key);
 
     setState(() {
       selectedImages.remove(key); // 記憶庫から削除
@@ -382,7 +278,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
 
     // もし今日の日付の画像を消したなら、自動でデフォルト壁紙に戻す
     if (month == DateTime.now().month && day == DateTime.now().day) {
-      String? defPath = prefs.getString(defaultWallpaperKey);
+      String? defPath = await _storage.getDefaultImagePath();
       if (defPath != null && defPath.isNotEmpty) {
         try {
           await AsyncWallpaper.setWallpaper(
@@ -469,15 +365,13 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
 
   // メモを保存する関数
   Future<void> _saveMemo(int month, int day, String text) async {
-    final prefs = await SharedPreferences.getInstance();
     String key = '$month-$day';
+    await _storage.saveMemo(key, text);
     if (text.isEmpty) {
-      await prefs.remove('memo_$key');
       setState(() {
         dateMemos.remove(key);
       });
     } else {
-      await prefs.setString('memo_$key', text);
       setState(() {
         dateMemos[key] = text;
       });
@@ -485,15 +379,13 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
   }
 
   Future<void> _saveTag(int month, int day, List<String> tags) async {
-    final prefs = await SharedPreferences.getInstance();
     String key = '$month-$day';
+    await _storage.saveTags(key, tags);
     if (tags.isEmpty) {
-      await prefs.remove('tag_$key');
       setState(() {
         dateTags.remove(key);
       });
     } else {
-      await prefs.setStringList('tag_$key', tags);
       setState(() {
         dateTags[key] = tags;
       });
