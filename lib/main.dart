@@ -1,9 +1,9 @@
-import 'dart:io'; // ファイルを扱う用
 import 'package:flutter/material.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:dynamic_color/dynamic_color.dart'; // DynamicColorBuilderのエラー対策
 import 'background_task.dart';
 import 'calendar_storage_service.dart';
+import 'calendar_view.dart';
 import 'theme_service.dart'; // ThemeServiceのエラー対策
 import 'notification_service.dart';
 import 'wallpaper_service.dart';
@@ -489,6 +489,34 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     });
   }
 
+  void _handleCalendarMonthChanged(int month) {
+    setState(() {
+      currentMonth = month;
+      selectedDay = null;
+      showTextField = false;
+      showTagEditor = false;
+      editingTagIndex = null;
+      tagController.clear();
+    });
+  }
+
+  void _handleCalendarDayTap(int day) {
+    final key = '$currentMonth-$day';
+    setState(() {
+      if (selectedDay == day) {
+        selectedDay = null;
+        showTextField = false;
+        showTagEditor = false;
+      } else {
+        selectedDay = day;
+        showTextField = false;
+        showTagEditor = false;
+        textController.text = dateMemos[key] ?? '';
+        tagController.clear();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -560,6 +588,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
             padding: const EdgeInsets.all(16.0),
             child: Column(
               children: [
+                /*
                 // 【1】月を切り替えるヘッダーエリア
                 Padding(
                   padding: const EdgeInsets.symmetric(vertical: 15.0),
@@ -600,6 +629,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                   ),
                 ),
 
+                */
                 // 【2】日付の一覧エリア ＋ 【3】スマート操作エリア
                 Expanded(
                   child: GestureDetector(
@@ -609,6 +639,18 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
+                          CalendarView(
+                            pageController: _pageController,
+                            currentMonth: currentMonth,
+                            selectedDay: selectedDay,
+                            daysInMonth: daysInMonth,
+                            selectedImages: selectedImages,
+                            colorScheme: currentColors,
+                            now: now,
+                            onMonthChanged: _handleCalendarMonthChanged,
+                            onDayTap: _handleCalendarDayTap,
+                          ),
+                          /*
                           SizedBox(
                             height:
                                 (MediaQuery.of(context).size.width - 32) /
@@ -782,6 +824,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                             ),
                           ),
 
+                          */
                           if (selectedDay != null)
                             SelectedDatePanel(
                               month: currentMonth,
