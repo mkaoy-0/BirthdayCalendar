@@ -679,7 +679,12 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
             onPressed: widget.onToggleTheme,
           ),
           IconButton(
-            icon: Icon(Icons.today, color: currentColors.onPrimary),
+            icon: Icon(
+              Icons.today,
+              color: currentMonth == now.month && selectedDay == now.day
+                  ? currentColors.tertiaryContainer
+                  : currentColors.onPrimary,
+            ),
             tooltip: '今日の日付へ移動',
             onPressed: _selectToday,
           ),
@@ -696,7 +701,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
               _isMenuOpen ? Icons.close : Icons.image,
               color: currentColors.onPrimary,
             ),
-            tooltip: 'メニュー',
+            tooltip: 'デフォルト壁紙設定',
             onPressed: () => _toggleTopPanel(search: false),
           ),
         ],
