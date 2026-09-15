@@ -590,6 +590,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
           'Birthday Calendar',
           style: TextStyle(
             color: currentColors.onPrimary, // タイトルの文字色も壁紙に合わせて変化させる
+            fontSize: 20,
             fontFamily: 'fantasy',
             fontWeight: FontWeight.w500,
           ),
@@ -656,7 +657,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                       Text(
                         '$currentMonth月',
                         style: const TextStyle(
-                          fontSize: 24,
+                          fontSize: 23,
                           letterSpacing: 2.0,
                           fontFamily: 'serif',
                         ),
