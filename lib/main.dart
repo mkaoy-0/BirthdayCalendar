@@ -1,42 +1,42 @@
-import 'dart:io'; // ファイルを扱うために追加
+import 'dart:io'; // ファイルを扱う用
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // 画像選択のために追加
-import 'package:image_cropper/image_cropper.dart'; // ★追加
-import 'package:shared_preferences/shared_preferences.dart'; // ★追加
-import 'package:async_wallpaper/async_wallpaper.dart'; // ★追加
-import 'package:workmanager/workmanager.dart'; // ★追加
-import 'package:dynamic_color/dynamic_color.dart'; // DynamicColorBuilderのエラーを消すお守り
-import 'theme_service.dart'; // 👈 ThemeServiceのエラーを消すお守り
+import 'package:image_picker/image_picker.dart'; // 画像選択用
+import 'package:image_cropper/image_cropper.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:async_wallpaper/async_wallpaper.dart';
+import 'package:workmanager/workmanager.dart';
+import 'package:dynamic_color/dynamic_color.dart'; // DynamicColorBuilderのエラー対策
+import 'theme_service.dart'; // ThemeServiceのエラー対策
 import 'notification_service.dart';
 import 'search_menu_panel.dart';
 import 'tag_edit_panel.dart';
 import 'tag_search_panel.dart';
 
-// ★裏方タスクの名前を定義
+// 裏方タスクの名前を定義
 const String wallpaperTaskName = "com.example.dailyWallpaperTask";
-const String defaultWallpaperKey = "default_wallpaper_path"; // ★デフォルト壁紙用の保存キー
+const String defaultWallpaperKey = "default_wallpaper_path"; // デフォルト壁紙用の保存キー
 
-@pragma('vm:entry-point') // 必須：裏で動くコードであることをFlutterに示すお守り
+@pragma('vm:entry-point') // 裏で動くコードであることをFlutterに示す
 void callbackDispatcher() {
   Workmanager().executeTask((task, inputData) async {
     WidgetsFlutterBinding.ensureInitialized();
     await NotificationService.init(requestPermission: false);
 
-    // 1. 現在の「月」と「日」を取得
+    // 現在の月と日を取得
     final now = DateTime.now();
     String key = "${now.month}-${now.day}";
     String lastUpdatedKey = "last_updated_date"; // 最後に壁紙を変えた日を記録するキー
 
-    // 2. スマホの保存庫を開く
+    // スマホの保存庫を開く
     final prefs = await SharedPreferences.getInstance();
 
-    // もし最後に壁紙を変えた日が「今日」なら、もう0時の仕事は終わっているので何もせず終了する
+    // もし最後に壁紙を変えた日が今日なら、もう0時の仕事は終わっているので何もせず終了する
     String? lastUpdated = prefs.getString(lastUpdatedKey);
     if (lastUpdated == key) {
       return Future.value(true);
     }
 
-    // ======= 💡ここから新設：毎朝のメモ通知処理 =======
+    // ======= 毎朝のメモ通知処理 =======
     // 保存庫から「memo_月-日」のデータを狙い撃ちで読み込む
     String memoKey = "memo_$key";
     String? todayMemo = prefs.getString(memoKey);
@@ -68,7 +68,7 @@ void callbackDispatcher() {
       imagePath = prefs.getString(defaultWallpaperKey);
     }
 
-    // 3. もし今日の日付に画像が登録されていたら、壁紙を変更する！
+    // 3もし今日の日付に画像が登録されていたら、壁紙を変更する
     if (imagePath != null && imagePath.isNotEmpty) {
       try {
         await AsyncWallpaper.setWallpaper(
@@ -80,7 +80,7 @@ void callbackDispatcher() {
           ),
         );
 
-        // 壁紙の変更に成功したら、「今日の日付」をスタンプとしてスマホに保存する
+        // 壁紙の変更に成功したら、今日の日付をスタンプとしてスマホに保存する
         await prefs.setString(lastUpdatedKey, key);
       } catch (e) {
         debugPrint("壁紙の自動変更に失敗しました: $e");
@@ -117,7 +117,7 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // ここで公式の DynamicColorBuilder を呼び出します！
+    // DynamicColorBuilder を呼び出す
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
         // 別スクリプト（ThemeService）に本物の壁紙色（lightDynamic）を渡して、カラースキームを作ってもらう
@@ -129,7 +129,7 @@ class MyApp extends StatelessWidget {
           title: 'Birthday Calendar',
           theme: ThemeData(
             useMaterial3: true,
-            colorScheme: lightColorScheme, // 👈 抽出された「本物の壁紙カラーパレット」をアプリ全体に一発適用！
+            colorScheme: lightColorScheme, // 抽出された本物の壁紙カラーパレットをアプリ全体に一発適用
           ),
           home: const WallpaperCalendarPage(),
         );
@@ -150,9 +150,9 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
   late final PageController _pageController = PageController(
     initialPage: 1200 + currentMonth - 1,
   );
-  int currentMonth = DateTime.now().month; // 初期表示を「現在の月」にするように進化！
+  int currentMonth = DateTime.now().month; // 初期表示を現在の月にする
 
-  // 各月が何日まであるかのデータ（うるう年は一旦無視して2月は28日）
+  // 各月が何日まであるかのデータ
   final Map<int, int> daysInMonth = {
     1: 31,
     2: 29,
@@ -168,31 +168,31 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     12: 31,
   };
 
-  // ★選んだ画像のパスを保存する「記憶庫」
+  // 選んだ画像のパスを保存する記憶庫
   final Map<String, String> selectedImages = {};
-  final Map<String, String> dateMemos = {}; // ★日付ごとのメモを保存するための新しい「記憶庫」
-  String defaultImagePath = ''; // ★デフォルト壁紙のパスを覚える変数
+  final Map<String, String> dateMemos = {}; // 日付ごとのメモを保存するための新しい記憶庫
+  String defaultImagePath = ''; // デフォルト壁紙のパスを覚える変数
 
-  // ★追加：現在選択されている「日」を覚える変数（ハイライト用）
+  // 現在選択されている日を覚える変数（ハイライト用）
   int? selectedDay;
-  // ★追加：テキスト入力欄を表示するかどうかのフラグ
+  // テキスト入力欄を表示するかどうかのフラグ
   bool showTextField = false;
   bool showTagEditor = false;
   OverlayEntry? _tagSearchOverlay;
   AnimationController? _tagSearchController;
   Animation<Offset>? _tagSearchOffset;
-  // ★追加：右側から出るメニューを開閉するフラグ
+  // 右側から出るメニューを開閉するフラグ
   bool _isMenuOpen = false;
 
-  final textController = TextEditingController(); // ★テキスト入力欄のコントローラー
+  final textController = TextEditingController(); // テキスト入力欄のコントローラー
   final TextEditingController tagController = TextEditingController();
 
   final FocusNode tagFocusNode = FocusNode();
 
-  final Map<String, List<String>> dateTags = {}; // ★日付ごとのタグを保存するマップ
+  final Map<String, List<String>> dateTags = {}; // 日付ごとのタグを保存するマップ
   int? editingTagIndex;
 
-  // ★アプリ起動時に、スマホに保存されているデータを自動で読み込む処理
+  // アプリ起動時に、スマホに保存されているデータを自動で読み込む処理
   @override
   void initState() {
     super.initState();
@@ -229,7 +229,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     super.dispose();
   }
 
-  // ★スマホからデータを読み込む関数
+  // スマホからデータを読み込む関数
   Future<void> _loadSavedImages() async {
     final prefs = await SharedPreferences.getInstance();
     // スマホ内に保存されているすべての「キー（月-日）」を取得
@@ -268,7 +268,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
       aspectRatio: const CropAspectRatio(ratioX: 9, ratioY: 16),
       uiSettings: [
         AndroidUiSettings(
-          toolbarTitle: title, // 👈 ここで送られてきたタイトル（'デフォルト壁紙の切り抜き' など）が使われます
+          toolbarTitle: title, // ここで送られてきたタイトル（'デフォルト壁紙の切り抜き' など）が使われる
           toolbarColor: Theme.of(context).colorScheme.primary,
           toolbarWidgetColor: Theme.of(context).colorScheme.onPrimary,
           initAspectRatio: CropAspectRatioPreset.original,
@@ -301,7 +301,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     }
   }
 
-  // 画像を上書き・変更する関数（_pickImageから名前を変更して整理）
+  // 画像を上書き・変更する関数
   Future<void> _updateImage(int month, int day) async {
     final ImagePicker picker = ImagePicker();
     final XFile? image = await picker.pickImage(source: ImageSource.gallery);
@@ -340,7 +340,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     }
   }
 
-  // ★追加：画像を消去する関数
+  // 画像を消去する関数
   Future<void> _deleteImage(int month, int day) async {
     final prefs = await SharedPreferences.getInstance();
     String key = '$month-$day';
@@ -370,7 +370,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     }
   }
 
-  // ★追加：メモを保存する関数
+  // メモを保存する関数
   Future<void> _saveMemo(int month, int day, String text) async {
     final prefs = await SharedPreferences.getInstance();
     String key = '$month-$day';
@@ -464,7 +464,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
           style: TextStyle(
             color: currentColors.onPrimary, // タイトルの文字色も壁紙に合わせて変化させる
             fontFamily: 'fantasy',
-            fontWeight: FontWeight.w500, // ほんの少しだけ線を細くして上品に（お好みで太くもできます）
+            fontWeight: FontWeight.w500,
           ),
         ),
         backgroundColor: currentColors.primary,
@@ -546,12 +546,12 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                 0.55 *
                                 5.1,
                             child: PageView.builder(
-                              // 💡 上で定義したコントローラーをここにセット！
+                              // 上で定義したコントローラーをここにセット
                               controller: _pageController,
-                              // 💡 itemCountをあえて指定しないことで無限スワイプを可能にします
+                              // itemCountをあえて指定しないことで無限スワイプを可能に
                               onPageChanged: (index) {
                                 setState(() {
-                                  // 💡 インデックスから「1〜12月」のどれに該当するかを計算
+                                  // インデックスから「1〜12月」のどれに該当するかを計算
                                   currentMonth = (index % 12) + 1;
                                   selectedDay = null;
                                   showTextField = false;
@@ -599,19 +599,22 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                         selectedDay == dayNumber &&
                                         currentMonth == monthForPage;
 
-                                    // 1. 写真があるかどうかを事前に判定（判定処理の重複を減らしてスッキリさせます）
+                                    // 写真があるかどうかを事前に判定（判定処理の重複を減らしてスッキリさせる）
                                     final hasImage =
                                         imagePath != null &&
                                         imagePath.isNotEmpty;
 
                                     return InkWell(
+                                      // マス目がタップされたときの処理
                                       onTap: () {
                                         setState(() {
+                                          // もしすでに選択されている日付をもう一度タップしたら選択を解除する
                                           if (selectedDay == dayNumber) {
                                             selectedDay = null;
                                             showTextField = false;
                                             showTagEditor = false;
                                           } else {
+                                            // タップした日を選択状態にする
                                             selectedDay = dayNumber;
                                             showTextField = false;
                                             showTagEditor = false;
@@ -622,17 +625,17 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                         });
                                       },
 
+                                      // マス目自体の見た目
                                       child: Container(
                                         decoration: BoxDecoration(
-                                          border: Border.all(
-                                            // color: const Color.fromARGB(255, 0, 0, 0),
+                                          border: Border.all(   // 枠線
                                             color: currentColors.onSurface,
                                             width: 0.45,
                                           ),
                                           borderRadius: BorderRadius.circular(
                                             1,
                                           ),
-                                          color: hasImage
+                                          color: hasImage   // 画像があるときは背景色を敷く
                                               ? currentColors.surface
                                               : null,
                                           image: hasImage
@@ -642,7 +645,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                                   ),
                                                   fit: BoxFit.cover,
                                                   colorFilter: ColorFilter.mode(
-                                                    Colors.black.withValues(
+                                                    Colors.black.withValues(   // 画像の上に黒い半透明を重ねて文字を見やすくする
                                                       alpha: 0.4,
                                                     ),
                                                     BlendMode.srcATop,
@@ -651,6 +654,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                               : null,
                                         ),
 
+                                        // マス目の真ん中に日付の数字を配置
                                         child: Center(
                                           child: Container(
                                             width: isToday
@@ -660,6 +664,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                                 ? (isSelected ? 42.0 : 32.0)
                                                 : null,
                                             alignment: Alignment.center,
+                                            // 今日の日付の場合は、丸い背景を描画して目立たせる
                                             decoration: isToday
                                                 ? BoxDecoration(
                                                     color:
@@ -667,6 +672,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                                     shape: BoxShape.circle,
                                                   )
                                                 : null,
+                                            // マス目に表示する日付の数字
                                             child: Text(
                                               dayNumber.toString().padLeft(
                                                 2,
@@ -676,9 +682,9 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                                 fontSize: isSelected ? 19 : 13,
                                                 fontStyle: FontStyle.italic,
                                                 fontFamily: 'Times New Roman',
-                                                color: isToday
-                                                    ? currentColors.onSurface
-                                                    : (hasImage ? Colors.white : currentColors.onSurface),
+                                                // 画像があるときは白文字
+                                                color: hasImage ? Colors.white : currentColors.onSurface,
+                                                // 画像の上にあるときは、文字が埋もれないように黒い影をつける
                                                 shadows: hasImage
                                                     ? const [
                                                         Shadow(
@@ -905,7 +911,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                       tagFocusNode: tagFocusNode,
                                       onToggleEditing: () async {
                                         if (showTagEditor) {
-                                          // 💡 編集中（チェックボタン）の時に押されたら保存を実行
+                                          // 編集中（チェックボタン）の時に押されたら保存を実行
                                           final tags = List<String>.from(
                                             dateTags[selectedKey] ?? [],
                                           );
@@ -930,14 +936,14 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                             tags.add(newText);
                                           }
 
-                                          // データの保存（ここで async/await が必要になります）
+                                          // データの保存（ここで async/await が必要になる）
                                           await _saveTag(
                                             currentMonth,
                                             selectedDay!,
                                             tags,
                                           );
 
-                                          // 保存が完了したら編集モードを閉じる（もとのコードにあった更新とunfocus処理）
+                                          // 保存が完了したら編集モードを閉じる
                                           setState(() {
                                             showTagEditor = false;
                                             editingTagIndex = null;
@@ -945,7 +951,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                           });
                                           FocusScope.of(context).unfocus();
                                         } else {
-                                          // 💡 非編集中の時に押されたら編集モードを開く（もとのコードにあった処理）
+                                          // 非編集中の時に押されたら編集モードを開く
                                           setState(() {
                                             showTagEditor = true;
                                             editingTagIndex = null;
