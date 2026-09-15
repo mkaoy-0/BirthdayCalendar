@@ -1,14 +1,12 @@
 import 'dart:io'; // ファイルを扱う用
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart'; // 画像選択用
-import 'package:image_cropper/image_cropper.dart';
-import 'package:async_wallpaper/async_wallpaper.dart';
 import 'package:workmanager/workmanager.dart';
 import 'package:dynamic_color/dynamic_color.dart'; // DynamicColorBuilderのエラー対策
 import 'background_task.dart';
 import 'calendar_storage_service.dart';
 import 'theme_service.dart'; // ThemeServiceのエラー対策
 import 'notification_service.dart';
+import 'wallpaper_service.dart';
 import 'search_menu_panel.dart';
 import 'tag_edit_panel.dart';
 import 'tag_search_panel.dart';
@@ -95,6 +93,7 @@ class WallpaperCalendarPage extends StatefulWidget {
 class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     with SingleTickerProviderStateMixin {
   final CalendarStorageService _storage = CalendarStorageService();
+  final WallpaperService _wallpaper = WallpaperService();
   late final PageController _pageController = PageController(
     initialPage: 1200 + currentMonth - 1,
   );
@@ -190,78 +189,42 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     });
   }
 
-  // 画像を指定したサイズにトリミングする関数
-  Future<String?> _cropImage(String sourcePath, String title) async {
-    CroppedFile? croppedFile = await ImageCropper().cropImage(
-      sourcePath: sourcePath,
-      aspectRatio: const CropAspectRatio(ratioX: 9, ratioY: 16),
-      uiSettings: [
-        AndroidUiSettings(
-          toolbarTitle: title, // ここで送られてきたタイトル（'デフォルト壁紙の切り抜き' など）が使われる
-          toolbarColor: Theme.of(context).colorScheme.primary,
-          toolbarWidgetColor: Theme.of(context).colorScheme.onPrimary,
-          initAspectRatio: CropAspectRatioPreset.original,
-          lockAspectRatio: true,
-        ),
-      ],
-    );
-    return croppedFile?.path;
-  }
-
   // デフォルト壁紙を設定する関数
   Future<void> _pickDefaultWallpaper() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    final croppedPath = await _wallpaper.pickAndCrop('デフォルト壁紙の切り抜き');
+    if (croppedPath != null) {
+      await _storage.saveDefaultImage(croppedPath);
 
-    if (image != null) {
-      String? croppedPath = await _cropImage(image.path, 'デフォルト壁紙の切り抜き');
-      if (croppedPath != null) {
-        await _storage.saveDefaultImage(croppedPath);
+      setState(() {
+        defaultImagePath = croppedPath;
+      });
 
-        setState(() {
-          defaultImagePath = croppedPath;
-        });
-
-        ScaffoldMessenger.of(
-          context,
-        ).showSnackBar(const SnackBar(content: Text('デフォルト壁紙を登録しました！')));
-      }
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('デフォルト壁紙を登録しました！')));
     }
   }
 
   // 画像を上書き・変更する関数
   Future<void> _updateImage(int month, int day) async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
+    final croppedPath = await _wallpaper.pickAndCrop('壁紙サイズに切り抜き');
+    if (croppedPath != null) {
+      String key = '$month-$day';
+      await _storage.saveImage(key, croppedPath);
 
-    if (image != null) {
-      String? croppedPath = await _cropImage(image.path, '壁紙サイズに切り抜き');
-      if (croppedPath != null) {
-        String key = '$month-$day';
-        await _storage.saveImage(key, croppedPath);
+      setState(() {
+        selectedImages[key] = croppedPath;
+      });
 
-        setState(() {
-          selectedImages[key] = croppedPath;
-        });
+      if (month == DateTime.now().month && day == DateTime.now().day) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(const SnackBar(content: Text('今日の日付なので壁紙を変更中...')));
 
-        // 画像を登録したその場で、現在の壁紙にも即時反映させてみるテスト
-        if (month == DateTime.now().month && day == DateTime.now().day) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(const SnackBar(content: Text('今日の日付なので壁紙を変更中...')));
-
-          try {
-            await AsyncWallpaper.setWallpaper(
-              WallpaperRequest(
-                target: WallpaperTarget.home, // ホーム画面に設定
-                sourceType: WallpaperSourceType.file, // ファイルから読み込む
-                source: croppedPath, // 切り抜いた画像のパス
-                goToHome: true, // 設定後に自動でホームに戻る
-              ),
-            );
-          } catch (e) {
-            debugPrint("手動での壁紙変更に失敗しました: $e");
-          }
+        try {
+          await _wallpaper.setWallpaper(path: croppedPath, goToHome: true);
+        } catch (error) {
+          debugPrint('手動での壁紙変更に失敗しました: $error');
         }
       }
     }
@@ -281,16 +244,9 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
       String? defPath = await _storage.getDefaultImagePath();
       if (defPath != null && defPath.isNotEmpty) {
         try {
-          await AsyncWallpaper.setWallpaper(
-            WallpaperRequest(
-              target: WallpaperTarget.home,
-              sourceType: WallpaperSourceType.file,
-              source: defPath,
-              goToHome: false,
-            ),
-          );
-        } catch (e) {
-          debugPrint("デフォルト壁紙への復帰に失敗しました: $e");
+          await _wallpaper.setWallpaper(path: defPath, goToHome: false);
+        } catch (error) {
+          debugPrint('デフォルト壁紙への復帰に失敗しました: $error');
         }
       }
     }
