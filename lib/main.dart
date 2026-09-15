@@ -112,8 +112,15 @@ void main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool _isDarkMode = false;
 
   @override
   Widget build(BuildContext context) {
@@ -124,6 +131,9 @@ class MyApp extends StatelessWidget {
         final ColorScheme lightColorScheme = ThemeService.createLightScheme(
           lightDynamic,
         );
+        final ColorScheme darkColorScheme = ThemeService.createDarkScheme(
+          darkDynamic,
+        );
 
         return MaterialApp(
           title: 'Birthday Calendar',
@@ -131,7 +141,19 @@ class MyApp extends StatelessWidget {
             useMaterial3: true,
             colorScheme: lightColorScheme, // 抽出された本物の壁紙カラーパレットをアプリ全体に一発適用
           ),
-          home: const WallpaperCalendarPage(),
+          darkTheme: ThemeData(
+            useMaterial3: true,
+            colorScheme: darkColorScheme,
+          ),
+          themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
+          home: WallpaperCalendarPage(
+            isDarkMode: _isDarkMode,
+            onToggleTheme: () {
+              setState(() {
+                _isDarkMode = !_isDarkMode;
+              });
+            },
+          ),
         );
       },
     );
@@ -139,7 +161,14 @@ class MyApp extends StatelessWidget {
 }
 
 class WallpaperCalendarPage extends StatefulWidget {
-  const WallpaperCalendarPage({super.key});
+  const WallpaperCalendarPage({
+    super.key,
+    required this.isDarkMode,
+    required this.onToggleTheme,
+  });
+
+  final bool isDarkMode;
+  final VoidCallback onToggleTheme;
 
   @override
   State<WallpaperCalendarPage> createState() => _WallpaperCalendarPageState();
@@ -183,6 +212,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
   Animation<Offset>? _tagSearchOffset;
   // 右側から出るメニューを開閉するフラグ
   bool _isMenuOpen = false;
+  bool _isSearchOpen = false;
 
   final textController = TextEditingController(); // テキスト入力欄のコントローラー
   final TextEditingController tagController = TextEditingController();
@@ -442,6 +472,34 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     _tagSearchController?.reverse();
   }
 
+  Future<void> _toggleTopPanel({required bool search}) async {
+    FocusScope.of(context).unfocus();
+
+    final isCurrentPanelOpen = search ? _isSearchOpen : _isMenuOpen;
+    if (isCurrentPanelOpen) {
+      setState(() {
+        _isMenuOpen = false;
+        _isSearchOpen = false;
+      });
+      return;
+    }
+
+    final hasOtherPanelOpen = _isMenuOpen || _isSearchOpen;
+    if (hasOtherPanelOpen) {
+      setState(() {
+        _isMenuOpen = false;
+        _isSearchOpen = false;
+      });
+      await Future<void>.delayed(const Duration(milliseconds: 250));
+      if (!mounted) return;
+    }
+
+    setState(() {
+      _isSearchOpen = search;
+      _isMenuOpen = !search;
+    });
+  }
+
   Future<void> _selectDateFromSearch(String key) async {
     final parts = key.split('-');
     if (parts.length != 2) return;
@@ -457,6 +515,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     FocusScope.of(context).unfocus();
     setState(() {
       _isMenuOpen = false;
+      _isSearchOpen = false;
       currentMonth = month;
       selectedDay = null;
       showTextField = false;
@@ -492,6 +551,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     FocusScope.of(context).unfocus();
     setState(() {
       _isMenuOpen = false;
+      _isSearchOpen = false;
       currentMonth = month;
       selectedDay = null;
       showTextField = false;
@@ -548,6 +608,14 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
         actions: [
           IconButton(
             icon: Icon(
+              widget.isDarkMode ? Icons.dark_mode : Icons.light_mode,
+              color: currentColors.onPrimary,
+            ),
+            tooltip: 'ライト/ダークモード切替',
+            onPressed: widget.onToggleTheme,
+          ),
+          IconButton(
+            icon: Icon(
               Icons.today,
               color: currentColors.onPrimary,
             ),
@@ -556,16 +624,19 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
           ),
           IconButton(
             icon: Icon(
+              _isSearchOpen ? Icons.close : Icons.search,
+              color: currentColors.onPrimary,
+            ),
+            tooltip: '検索パネルを開く',
+            onPressed: () => _toggleTopPanel(search: true),
+          ),
+          IconButton(
+            icon: Icon(
               _isMenuOpen ? Icons.close : Icons.menu,
               color: currentColors.onPrimary,
             ),
             tooltip: 'メニュー',
-            onPressed: () {
-              FocusScope.of(context).unfocus(); // キーボードが出ているときは閉じる
-              setState(() {
-                _isMenuOpen = !_isMenuOpen;
-              });
-            },
+            onPressed: () => _toggleTopPanel(search: false),
           ),
         ],
       ),
@@ -666,7 +737,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                     if (dayNumber > maxDaysForPage) {
                                       return Container(
                                         decoration: BoxDecoration(
-                                          color: currentColors.surfaceVariant,
+                                          color: currentColors.surfaceVariant.withValues(alpha: 0.8),
                                           borderRadius: BorderRadius.circular(
                                             1,
                                           ),
@@ -753,7 +824,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                             decoration: isToday
                                                 ? BoxDecoration(
                                                     color:
-                                                        currentColors.inversePrimary.withValues(alpha: 0.84),
+                                                        currentColors.inversePrimary.withValues(alpha: 0.9),
                                                     shape: BoxShape.circle,
                                                   )
                                                 : null,
@@ -1145,7 +1216,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
             curve: Curves.easeOutCubic,
             left: 0,
             right: 0,
-            top: _isMenuOpen ? 0 : -menuHeight,
+            top: _isMenuOpen || _isSearchOpen ? 0 : -menuHeight,
             height: menuHeight,
             child: Material(
               color: currentColors.primary,
@@ -1161,6 +1232,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                         dateTags: dateTags,
                         onTagTap: _openTagSearch,
                         onDateTap: _selectDateFromSearch,
+                        showSearch: _isSearchOpen,
                         colorScheme: currentColors,
                       ),
                     ),

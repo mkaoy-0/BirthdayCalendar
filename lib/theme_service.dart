@@ -1,7 +1,7 @@
 // theme_service.dart
 
 import 'package:flutter/material.dart';
-import 'package:dynamic_color/dynamic_color.dart'; // 本物の調和機能を使うために、ここにインポートを追加します！
+import 'package:dynamic_color/dynamic_color.dart';
 
 class ThemeService {
   static const _seedColor = Colors.blue;
@@ -15,6 +15,19 @@ class ThemeService {
     return ColorScheme.fromSeed(
       seedColor: _seedColor,
       brightness: Brightness.light,
+    );
+  }
+
+  /// Androidのシステム壁紙から抽出された色を元に、ダークモード用のカラースキームを生成
+  static ColorScheme createDarkScheme(ColorScheme? dynamicColorScheme) {
+    if (dynamicColorScheme != null) {
+      return dynamicColorScheme.harmonized().copyWith(
+        brightness: Brightness.dark,
+      );
+    }
+    return ColorScheme.fromSeed(
+      seedColor: _seedColor,
+      brightness: Brightness.dark,
     );
   }
 }
