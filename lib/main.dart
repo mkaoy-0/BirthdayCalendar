@@ -483,6 +483,41 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     });
   }
 
+  Future<void> _selectToday() async {
+    final today = DateTime.now();
+    final month = today.month;
+    final day = today.day;
+
+    _closeTagSearch();
+    FocusScope.of(context).unfocus();
+    setState(() {
+      _isMenuOpen = false;
+      currentMonth = month;
+      selectedDay = null;
+      showTextField = false;
+      showTagEditor = false;
+      editingTagIndex = null;
+      textController.clear();
+      tagController.clear();
+    });
+
+    final targetPage = 1200 + month - 1;
+    if (_pageController.hasClients && _pageController.page?.round() != targetPage) {
+      await _pageController.animateToPage(
+        targetPage,
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeOutCubic,
+      );
+    }
+
+    if (!mounted) return;
+    setState(() {
+      currentMonth = month;
+      selectedDay = day;
+      textController.text = dateMemos['$month-$day'] ?? '';
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -511,6 +546,14 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
         ),
         backgroundColor: currentColors.primary,
         actions: [
+          IconButton(
+            icon: Icon(
+              Icons.today,
+              color: currentColors.onPrimary,
+            ),
+            tooltip: '今日の日付へ移動',
+            onPressed: _selectToday,
+          ),
           IconButton(
             icon: Icon(
               _isMenuOpen ? Icons.close : Icons.menu,
