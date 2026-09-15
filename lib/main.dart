@@ -400,6 +400,73 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     }
   }
 
+  Future<void> _confirmDeleteImage(int month, int day) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        final dialogColorScheme = Theme.of(dialogContext).colorScheme;
+        return AlertDialog(
+          // 角をとがらせる
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(5.0),
+            // ウィンドウの枠線はタイトルの文字色と揃える
+            side: BorderSide(
+              color: dialogColorScheme.onSurface,
+              width: 1.0,
+            ),
+          ),
+          // タイトルの文字サイズを変更
+          title: Text(
+            '画像を削除しますか？',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: dialogColorScheme.onSurface,
+              fontSize: 16.0,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          // ボタンを横幅いっぱい、半分ずつに配置する
+          actionsPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: FilledButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(true),
+                    style: FilledButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(3.0),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12.0),
+                    ),
+                    child: const Text('YES'),
+                  ),
+                ),
+                const SizedBox(width: 12), // ボタンとボタンの間のすき間
+                Expanded(
+                  child: TextButton(
+                    onPressed: () => Navigator.of(dialogContext).pop(false),
+                    style: TextButton.styleFrom(
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(6.0),
+                      ),
+                      padding: const EdgeInsets.symmetric(vertical: 12.0),
+                    ),
+                    child: const Text('NO'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+
+    if (shouldDelete == true && mounted) {
+      await _deleteImage(month, day);
+    }
+  }
+
   // メモを保存する関数
   Future<void> _saveMemo(int month, int day, String text) async {
     final prefs = await SharedPreferences.getInstance();
@@ -497,7 +564,11 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     final month = int.tryParse(parts[0]);
     final day = int.tryParse(parts[1]);
     final maxDays = month == null ? null : daysInMonth[month];
-    if (month == null || day == null || maxDays == null || day < 1 || day > maxDays) {
+    if (month == null ||
+        day == null ||
+        maxDays == null ||
+        day < 1 ||
+        day > maxDays) {
       return;
     }
 
@@ -516,7 +587,8 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     });
 
     final targetPage = 1200 + month - 1;
-    if (_pageController.hasClients && _pageController.page?.round() != targetPage) {
+    if (_pageController.hasClients &&
+        _pageController.page?.round() != targetPage) {
       await _pageController.animateToPage(
         targetPage,
         duration: const Duration(milliseconds: 300),
@@ -552,7 +624,8 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     });
 
     final targetPage = 1200 + month - 1;
-    if (_pageController.hasClients && _pageController.page?.round() != targetPage) {
+    if (_pageController.hasClients &&
+        _pageController.page?.round() != targetPage) {
       await _pageController.animateToPage(
         targetPage,
         duration: const Duration(milliseconds: 300),
@@ -606,10 +679,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
             onPressed: widget.onToggleTheme,
           ),
           IconButton(
-            icon: Icon(
-              Icons.today,
-              color: currentColors.onPrimary,
-            ),
+            icon: Icon(Icons.today, color: currentColors.onPrimary),
             tooltip: '今日の日付へ移動',
             onPressed: _selectToday,
           ),
@@ -728,7 +798,8 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                     if (dayNumber > maxDaysForPage) {
                                       return Container(
                                         decoration: BoxDecoration(
-                                          color: currentColors.surfaceVariant.withValues(alpha: 0.8),
+                                          color: currentColors.surfaceVariant
+                                              .withValues(alpha: 0.8),
                                           borderRadius: BorderRadius.circular(
                                             1,
                                           ),
@@ -775,14 +846,16 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                       // マス目自体の見た目
                                       child: Container(
                                         decoration: BoxDecoration(
-                                          border: Border.all(   // 枠線
+                                          border: Border.all(
+                                            // 枠線
                                             color: currentColors.onSurface,
                                             width: 0.45,
                                           ),
                                           borderRadius: BorderRadius.circular(
                                             1,
                                           ),
-                                          color: hasImage   // 画像があるときは背景色を敷く
+                                          color:
+                                              hasImage // 画像があるときは背景色を敷く
                                               ? currentColors.surface
                                               : null,
                                           image: hasImage
@@ -792,7 +865,8 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                                   ),
                                                   fit: BoxFit.cover,
                                                   colorFilter: ColorFilter.mode(
-                                                    Colors.black.withValues(   // 画像の上に黒い半透明を重ねて文字を見やすくする
+                                                    Colors.black.withValues(
+                                                      // 画像の上に黒い半透明を重ねて文字を見やすくする
                                                       alpha: 0.4,
                                                     ),
                                                     BlendMode.srcATop,
@@ -814,8 +888,9 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                             // 今日の日付の場合は、丸い背景を描画して目立たせる
                                             decoration: isToday
                                                 ? BoxDecoration(
-                                                    color:
-                                                        currentColors.inversePrimary.withValues(alpha: 0.9),
+                                                    color: currentColors
+                                                        .inversePrimary
+                                                        .withValues(alpha: 0.9),
                                                     shape: BoxShape.circle,
                                                   )
                                                 : null,
@@ -830,7 +905,9 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                                 fontStyle: FontStyle.italic,
                                                 fontFamily: 'Times New Roman',
                                                 // 画像があるときは白文字
-                                                color: hasImage ? Colors.white : currentColors.onSurface,
+                                                color: hasImage
+                                                    ? Colors.white
+                                                    : currentColors.onSurface,
                                                 // 画像の上にあるときは、文字が埋もれないように黒い影をつける
                                                 shadows: hasImage
                                                     ? const [
@@ -915,7 +992,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
                                                 : currentColors.surfaceVariant,
                                           ),
                                           onPressed: hasImage
-                                              ? () => _deleteImage(
+                                              ? () => _confirmDeleteImage(
                                                   currentMonth,
                                                   selectedDay!,
                                                 )
@@ -1120,7 +1197,8 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
 
                                         if (editingTagIndex! < tags.length) {
                                           tags[editingTagIndex!] = suggestion;
-                                        } else if (editingTagIndex == tags.length) {
+                                        } else if (editingTagIndex ==
+                                            tags.length) {
                                           tags.add(suggestion);
                                         } else {
                                           return;
