@@ -11,6 +11,7 @@ import 'selected_date_panel.dart';
 import 'search_menu_panel.dart';
 import 'tag_search_panel.dart';
 import 'delete_confirm_dialog.dart'; // 削除確認ダイアログのインポート
+import 'top_slide_menu.dart'; // スライド式メニューのインポート
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -726,35 +727,18 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
               ],
             ),
           ),
-          AnimatedPositioned(
-            duration: const Duration(milliseconds: 250),
-            curve: Curves.easeOutCubic,
-            left: 0,
-            right: 0,
-            top: _isMenuOpen || _isSearchOpen ? 0 : -menuHeight,
-            height: menuHeight,
-            child: Material(
-              color: currentColors.primary,
-              child: SafeArea(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Expanded(
-                      child: MenuSearchPanel(
-                        defaultImagePath: defaultImagePath,
-                        onPickDefaultWallpaper: _pickDefaultWallpaper,
-                        dateMemos: dateMemos,
-                        dateTags: dateTags,
-                        onTagTap: _openTagSearch,
-                        onDateTap: _selectDateFromSearch,
-                        showSearch: _isSearchOpen,
-                        colorScheme: currentColors,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+          // 別ファイル化したスライドメニューを呼び出し
+          TopSlideMenu(
+            isOpen: _isMenuOpen,
+            isSearchOpen: _isSearchOpen,
+            menuHeight: menuHeight,
+            currentColors: currentColors,
+            defaultImagePath: defaultImagePath,
+            onPickDefaultWallpaper: _pickDefaultWallpaper,
+            dateMemos: dateMemos,
+            dateTags: dateTags,
+            onTagTap: _openTagSearch,
+            onDateTap: _selectDateFromSearch,
           ),
           // TagSearchPanel is shown via Overlay so it can appear above AppBar
         ],
