@@ -13,23 +13,23 @@ import 'tag_search_panel.dart';
 import 'delete_confirm_dialog.dart'; // 削除確認ダイアログのインポート
 import 'top_slide_menu.dart'; // スライド式メニューのインポート
 
+// アプリの起動と各種バックグラウンド処理の初期化
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await NotificationService.init();
-
   await Workmanager().initialize(callbackDispatcher);
-
+  // 一定時間ごとに壁紙を自動更新するバックグラウンドタスクを登録する
   await Workmanager().registerPeriodicTask(
     '1',
     wallpaperTaskName,
     frequency: const Duration(minutes: 15),
     existingWorkPolicy: ExistingPeriodicWorkPolicy.update,
   );
-
+  // アプリのルートウィジェットを画面に描画
   runApp(const MyApp());
 }
 
+// アプリ全体の設定やテーマ管理を行う親ウィジェット
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
@@ -38,14 +38,14 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  bool _isDarkMode = false;
+  bool _isDarkMode = false; // ダークモードが有効かどうかを管理するフラグ
 
   @override
   Widget build(BuildContext context) {
-    // DynamicColorBuilder を呼び出す
+    // OSや壁紙から動的なカラーパレットを取得するビルダーを呼び出す
     return DynamicColorBuilder(
       builder: (ColorScheme? lightDynamic, ColorScheme? darkDynamic) {
-        // 別スクリプト（ThemeService）に本物の壁紙色（lightDynamic）を渡して、カラースキームを作ってもらう
+        // 別スクリプト（ThemeService）に本物の壁紙色を渡してカラースキームを作ってもらう
         final ColorScheme lightColorScheme = ThemeService.createLightScheme(
           lightDynamic,
         );
@@ -63,6 +63,7 @@ class _MyAppState extends State<MyApp> {
             useMaterial3: true,
             colorScheme: darkColorScheme,
           ),
+          // 現在の状態に応じてライトまたはダークテーマを適用
           themeMode: _isDarkMode ? ThemeMode.dark : ThemeMode.light,
           home: WallpaperCalendarPage(
             isDarkMode: _isDarkMode,
@@ -78,6 +79,7 @@ class _MyAppState extends State<MyApp> {
   }
 }
 
+// カレンダー画面全体のレイアウトや状態管理を行うステートフルウィジェット
 class WallpaperCalendarPage extends StatefulWidget {
   const WallpaperCalendarPage({
     super.key,
@@ -99,7 +101,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
   late final PageController _pageController = PageController(
     initialPage: 1200 + currentMonth - 1,
   );
-  int currentMonth = DateTime.now().month; // 初期表示を現在の月にする
+  int currentMonth = DateTime.now().month; // 現在表示している月を保持する変数。初期表示を現在の月にする
 
   // 各月が何日まであるかのデータ
   final Map<int, int> daysInMonth = {
@@ -117,27 +119,23 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     12: 31,
   };
 
-  // 選んだ画像のパスを保存する記憶庫
-  final Map<String, String> selectedImages = {};
-  final Map<String, String> dateMemos = {}; // 日付ごとのメモを保存するための新しい記憶庫
-  String defaultImagePath = ''; // デフォルト壁紙のパスを覚える変数
+  final Map<String, String> selectedImages = {};  // 日付ごとの画像パスを保持するマップ
+  final Map<String, String> dateMemos = {}; // 日付ごとのメモ内容を保持するマップ
+  String defaultImagePath = ''; // アプリ全体で使用するデフォルト壁紙のパス
 
-  // 現在選択されている日を覚える変数（ハイライト用）
-  int? selectedDay;
-  // テキスト入力欄を表示するかどうかのフラグ
-  bool showTextField = false;
-  bool showTagEditor = false;
-  OverlayEntry? _tagSearchOverlay;
-  AnimationController? _tagSearchController;
+  int? selectedDay; // 現在選択されている日を覚える変数
+  bool showTextField = false; // メモ入力欄の表示状態を管理するフラグ
+  bool showTagEditor = false; // タグ編集欄の表示状態を管理するフラグ
+  OverlayEntry? _tagSearchOverlay; // タグ検索パネルを表示するためのオーバーレイエントリ
+  AnimationController? _tagSearchController; // タグ検索パネルのアニメーションを制御するコントローラー
   Animation<Offset>? _tagSearchOffset;
-  // 右側から出るメニューを開閉するフラグ
-  bool _isMenuOpen = false;
-  bool _isSearchOpen = false;
+  bool _isMenuOpen = false; // デフォルト壁紙設定ウィンドウを開閉するフラグ
+  bool _isSearchOpen = false; // 検索ウィンドウの開閉状態を管理するフラグ
 
   final textController = TextEditingController(); // テキスト入力欄のコントローラー
-  final TextEditingController tagController = TextEditingController();
+  final TextEditingController tagController = TextEditingController(); // タグ入力欄のコントローラー
 
-  final FocusNode tagFocusNode = FocusNode();
+  final FocusNode tagFocusNode = FocusNode(); // タグ入力欄のフォーカスを管理するノード
 
   final Map<String, List<String>> dateTags = {}; // 日付ごとのタグを保存するマップ
   int? editingTagIndex;
@@ -150,6 +148,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     _loadSavedImages(); // 読み込み開始
   }
 
+// タグ検索パネルを開閉する際のアニメーション設定を構築する
   void _ensureTagSearchAnimation() {
     if (_tagSearchController != null) return;
 
@@ -172,6 +171,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     });
   }
 
+  // 画面破棄時にアニメーションとオーバーレイのリソースを解放する
   @override
   void dispose() {
     _tagSearchController?.dispose();
@@ -179,7 +179,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     super.dispose();
   }
 
-  // スマホからデータを読み込む関数
+  // ストレージから保存済みの画像やメモ、タグデータを非同期で読み込む関数
   Future<void> _loadSavedImages() async {
     final data = await _storage.load();
     if (!mounted) return;
@@ -191,7 +191,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     });
   }
 
-  // デフォルト壁紙を設定する関数
+  // デフォルト壁紙を選択してストレージに保存する関数
   Future<void> _pickDefaultWallpaper() async {
     final croppedPath = await _wallpaper.pickAndCrop('デフォルト壁紙の切り抜き');
     if (croppedPath != null) {
@@ -207,14 +207,14 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     }
   }
 
-  // 画像を上書き・変更する関数
+  // 日付に設定する画像を上書き・変更する関数
   Future<void> _updateImage(int month, int day) async {
     final croppedPath = await _wallpaper.pickAndCrop('壁紙サイズに切り抜き');
     if (croppedPath != null) {
       String key = '$month-$day';
       await _storage.saveImage(key, croppedPath);
 
-      setState(() {
+      setState(() { // 画面上の画像保持マップを更新する
         selectedImages[key] = croppedPath;
       });
 
@@ -232,13 +232,13 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     }
   }
 
-  // 画像を消去する関数
+  // 特定の日付の画像を消去する関数
   Future<void> _deleteImage(int month, int day) async {
     String key = '$month-$day';
     await _storage.deleteImage(key);
 
     setState(() {
-      selectedImages.remove(key); // 記憶庫から削除
+      selectedImages.remove(key); // マップから削除
     });
 
     // もし今日の日付の画像を消したなら、自動でデフォルト壁紙に戻す
@@ -269,7 +269,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     }
   }
 
-  // メモを保存する関数
+  // 日付のメモを保存する関数
   Future<void> _saveMemo(int month, int day, String text) async {
     String key = '$month-$day';
     await _storage.saveMemo(key, text);
@@ -284,6 +284,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     }
   }
 
+  // 日付のタグリストをストレージに保存
   Future<void> _saveTag(int month, int day, List<String> tags) async {
     String key = '$month-$day';
     await _storage.saveTags(key, tags);
@@ -298,6 +299,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     }
   }
 
+  // タグ名をもとに該当する日付の一覧を表示する検索パネルをオーバーレイで開く
   void _openTagSearch(String tag) {
     if (_tagSearchOverlay != null) return;
     _ensureTagSearchAnimation();
@@ -332,11 +334,13 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     _tagSearchController?.forward(from: 0);
   }
 
+  // 開いているタグ検索パネルをアニメーションさせて閉じる
   void _closeTagSearch() {
     if (_tagSearchOverlay == null) return;
     _tagSearchController?.reverse();
   }
 
+  // 画面上部のスライドメニューや検索パネルの開閉状態を切り替える
   void _toggleTopPanel({required bool search}) {
     FocusScope.of(context).unfocus();
 
@@ -355,6 +359,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     });
   }
 
+  // 検索結果から特定の日付が選択された際に、その月に移動して詳細を表示する
   Future<void> _selectDateFromSearch(String key) async {
     final parts = key.split('-');
     if (parts.length != 2) return;
@@ -402,6 +407,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     });
   }
 
+  // 今日のおおもとの日付にカレンダーを移動し選択状態にする
   Future<void> _selectToday() async {
     final today = DateTime.now();
     final month = today.month;
@@ -439,6 +445,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     });
   }
 
+  // カレンダーのページめくりによって表示月が変更されたときの処理
   void _handleCalendarMonthChanged(int month) {
     setState(() {
       currentMonth = month;
@@ -450,6 +457,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     });
   }
 
+  // カレンダー上の日付セルがタップされたときの選択・非選択の切り替え処理
   void _handleCalendarDayTap(int day) {
     final key = '$currentMonth-$day';
     setState(() {
@@ -467,6 +475,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
     });
   }
 
+  // アプリのメイン画面全体のUI構造を組み立てて描画
   @override
   Widget build(BuildContext context) {
     final now = DateTime.now();
@@ -488,7 +497,7 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
         title: Text(
           'Birthday Calendar',
           style: TextStyle(
-            color: currentColors.onPrimary, // タイトルの文字色も壁紙に合わせて変化させる
+            color: currentColors.onPrimary,
             fontSize: 20,
             fontFamily: 'fantasy',
             fontWeight: FontWeight.w500,

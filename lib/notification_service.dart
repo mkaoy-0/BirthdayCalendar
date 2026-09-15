@@ -24,7 +24,7 @@ class NotificationService {
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Asia/Tokyo'));
 
-    // 💡 【重要】Android システムに通知チャンネルを作成・登録する処理を追加
+    // Android システムに通知チャンネルを作成・登録する処理を追加
     if (Platform.isAndroid) {
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
         'daily_memo_channel', // AndroidNotificationDetails で使っているIDと同じにする
@@ -53,7 +53,7 @@ class NotificationService {
     }
   }
 
-  /// 💡 解説サイトのロジックを組み込んだ時間指定関数
+  /// 時間指定関数
   static Future<void> scheduleDailyNotification(
     String memoTitle,
     String memoText,
@@ -66,7 +66,7 @@ class NotificationService {
       0,
       memoTitle,
       memoText,
-      scheduledDate, // 💡 ここで計算した時間を渡す
+      scheduledDate, // 計算した時間を渡す
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'daily_memo_channel',
@@ -82,7 +82,7 @@ class NotificationService {
     );
   }
 
-  /// 💡 【解説サイトの肝】次の指定時間のタイミングを計算する関数
+  /// 次の指定時間のタイミングを計算する関数
   static tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
 
