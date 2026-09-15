@@ -18,6 +18,7 @@ void main() {
             dateTags: const {},
             onTagTap: (_) {},
             onDateTap: (key) => selectedKey = key,
+            showSearch: true,
             colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
           ),
         ),

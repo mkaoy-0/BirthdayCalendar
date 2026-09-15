@@ -9,6 +9,7 @@ class MenuSearchPanel extends StatefulWidget {
     required this.dateTags,
     required this.onTagTap,
     required this.onDateTap,
+    required this.showSearch,
     required this.colorScheme,
   });
 
@@ -18,6 +19,7 @@ class MenuSearchPanel extends StatefulWidget {
   final Map<String, List<String>> dateTags;
   final ValueChanged<String> onTagTap;
   final ValueChanged<String> onDateTap;
+  final bool showSearch;
   final ColorScheme colorScheme;
 
   @override
@@ -97,67 +99,69 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: TextButton.icon(
-              icon: Icon(Icons.image, color: widget.colorScheme.onPrimaryContainer.withValues(alpha: 0.75)),
-              label: Text(
-                widget.defaultImagePath.isNotEmpty
-                    ? 'デフォルト壁紙を変更'
-                    : 'デフォルト壁紙を設定',
-                style: const TextStyle(
-                  fontFamily: 'Roboto',
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-              style: TextButton.styleFrom(
-                backgroundColor: widget.colorScheme.primaryContainer.withValues(alpha: 0.8),
-                foregroundColor: widget.colorScheme.onPrimaryContainer.withValues(alpha: 0.75),
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(8.0),
-                ),
-              ),
-              onPressed: widget.onPickDefaultWallpaper,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: TextField(
-              focusNode: searchFocusNode,
-              controller: searchController,
-              style: TextStyle(
-                color: widget.colorScheme.onPrimary,
-                fontFamily: 'OpenSans',
-                fontSize: 15,
-              ),
-              decoration: InputDecoration(
-                hintText: '検索キーワードを入力',
-                hintStyle: TextStyle(
-                  color: widget.colorScheme.onPrimary.withValues(alpha: 0.7),
-                  fontFamily: 'OpenSans',
-                ),
-                filled: true,
-                fillColor: widget.colorScheme.onPrimary.withValues(alpha: 0.12),
-                prefixIcon: Icon(
-                  Icons.search,
-                  color: widget.colorScheme.onPrimary.withValues(alpha: 0.8),
-                ),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12.0),
-                  borderSide: BorderSide.none,
-                ),
-              ),
-              onChanged: _runSearch,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Expanded(
-            child: Padding(
+          if (!widget.showSearch)
+            Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: searchController.text.isEmpty
+              child: TextButton.icon(
+                icon: Icon(Icons.image, color: widget.colorScheme.onPrimaryContainer.withValues(alpha: 0.75)),
+                label: Text(
+                  widget.defaultImagePath.isNotEmpty
+                      ? 'デフォルト壁紙を変更'
+                      : 'デフォルト壁紙を設定',
+                  style: const TextStyle(
+                    fontFamily: 'Roboto',
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+                style: TextButton.styleFrom(
+                  backgroundColor: widget.colorScheme.primaryContainer.withValues(alpha: 0.8),
+                  foregroundColor: widget.colorScheme.onPrimaryContainer.withValues(alpha: 0.75),
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8.0),
+                  ),
+                ),
+                onPressed: widget.onPickDefaultWallpaper,
+              ),
+            ),
+          if (widget.showSearch) ...[
+            const SizedBox(height: 16),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: TextField(
+                focusNode: searchFocusNode,
+                controller: searchController,
+                style: TextStyle(
+                  color: widget.colorScheme.onPrimary,
+                  fontFamily: 'OpenSans',
+                  fontSize: 15,
+                ),
+                decoration: InputDecoration(
+                  hintText: '検索キーワードを入力',
+                  hintStyle: TextStyle(
+                    color: widget.colorScheme.onPrimary.withValues(alpha: 0.7),
+                    fontFamily: 'OpenSans',
+                  ),
+                  filled: true,
+                  fillColor: widget.colorScheme.onPrimary.withValues(alpha: 0.12),
+                  prefixIcon: Icon(
+                    Icons.search,
+                    color: widget.colorScheme.onPrimary.withValues(alpha: 0.8),
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12.0),
+                    borderSide: BorderSide.none,
+                  ),
+                ),
+                onChanged: _runSearch,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: searchController.text.isEmpty
                   ? const SizedBox.shrink()
                   : searchResults.isEmpty
                   ? Align(
@@ -279,8 +283,9 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                         );
                       },
                     ),
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );
