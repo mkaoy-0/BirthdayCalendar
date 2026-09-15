@@ -7,6 +7,7 @@ class TagSearchPanel extends StatelessWidget {
     required this.dateTags,
     required this.dateMemos,
     required this.onClose,
+    required this.onDateTap,
     required this.colorScheme,
   });
 
@@ -14,6 +15,7 @@ class TagSearchPanel extends StatelessWidget {
   final Map<String, List<String>> dateTags;
   final Map<String, String> dateMemos;
   final VoidCallback onClose;
+  final ValueChanged<String> onDateTap;
   final ColorScheme colorScheme;
 
   List<String> _matchingKeys() {
@@ -115,37 +117,41 @@ class TagSearchPanel extends StatelessWidget {
                             final key = keys[index];
                             final mmdd = _formatKey(key);
                             final memo = dateMemos[key] ?? '';
-                            return Padding(
-                              padding: const EdgeInsets.only(left: 8.0),
-                              child: Row(
-                                crossAxisAlignment: CrossAxisAlignment.center,
-                                children: [
-                                  SizedBox(
-                                    width: 55,
-                                    child: Text(
-                                      mmdd,
-                                      style: TextStyle(
-                                        color: colorScheme.onSurface,
-                                        fontWeight: FontWeight.bold,
-                                        fontSize: 14,
-                                        fontFamily: 'Times New Roman',
-                                        fontStyle: FontStyle.italic,
+                            return InkWell(
+                              onTap: () => onDateTap(key),
+                              child: Padding(
+                                padding: const EdgeInsets.only(left: 8.0),
+                                child: Row(
+                                  crossAxisAlignment: CrossAxisAlignment.center,
+                                  children: [
+                                    SizedBox(
+                                      width: 55,
+                                      child: Text(
+                                        mmdd,
+                                        style: TextStyle(
+                                          color: colorScheme.onSurface,
+                                          fontWeight: FontWeight.bold,
+                                          fontSize: 14,
+                                          fontFamily: 'Times New Roman',
+                                          fontStyle: FontStyle.italic,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                  const SizedBox(width: 0),
-                                  Expanded(
-                                    child: Text(
-                                      memo,
-                                      style: TextStyle(
-                                        color: colorScheme.onSurface.withValues(alpha: 0.9),
-                                        fontSize: 12,
-                                        fontFamily: 'roboto',
-                                        fontWeight: FontWeight.w400,
+                                    const SizedBox(width: 0),
+                                    Expanded(
+                                      child: Text(
+                                        memo,
+                                        style: TextStyle(
+                                          color: colorScheme.onSurface
+                                              .withValues(alpha: 0.9),
+                                          fontSize: 12,
+                                          fontFamily: 'roboto',
+                                          fontWeight: FontWeight.w400,
+                                        ),
                                       ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
                             );
                           },

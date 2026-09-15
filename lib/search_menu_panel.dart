@@ -8,6 +8,7 @@ class MenuSearchPanel extends StatefulWidget {
     required this.dateMemos,
     required this.dateTags,
     required this.onTagTap,
+    required this.onDateTap,
     required this.colorScheme,
   });
 
@@ -16,6 +17,7 @@ class MenuSearchPanel extends StatefulWidget {
   final Map<String, String> dateMemos;
   final Map<String, List<String>> dateTags;
   final ValueChanged<String> onTagTap;
+  final ValueChanged<String> onDateTap;
   final ColorScheme colorScheme;
 
   @override
@@ -56,7 +58,12 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
           final paddedDate = parts.length == 2
               ? '${parts[0].padLeft(2, '0')}${parts[1].padLeft(2, '0')}'
               : key.replaceAll('-', '');
-          results.add({'kind': 'memo', 'date': paddedDate, 'text': memo});
+            results.add({
+              'kind': 'memo',
+              'key': key,
+              'date': paddedDate,
+              'text': memo,
+            });
         }
       });
 
@@ -185,12 +192,14 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                           alignment: Alignment.topCenter,
                           child: InkWell(
                             borderRadius: BorderRadius.circular(12.0),
-                            onTap: isTag
-                                ? () {
-                                    widget.onTagTap(result['text'] ?? '');
-                                    searchFocusNode.unfocus();
-                                  }
-                                : null,
+                            onTap: () {
+                              searchFocusNode.unfocus();
+                              if (isTag) {
+                                widget.onTagTap(result['text'] ?? '');
+                              } else {
+                                widget.onDateTap(result['key'] ?? '');
+                              }
+                            },
                             child: Container(
                               width: cardWidth,
                               padding: const EdgeInsets.symmetric(
