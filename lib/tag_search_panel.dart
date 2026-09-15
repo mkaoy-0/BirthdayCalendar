@@ -77,7 +77,7 @@ class TagSearchPanel extends StatelessWidget {
                       children: [
                         Icon(
                           Icons.label,
-                          color: colorScheme.onPrimary,
+                          color: colorScheme.onTertiary,
                           size: 15,
                         ),
                         const SizedBox(width: 8),
@@ -85,7 +85,7 @@ class TagSearchPanel extends StatelessWidget {
                           child: Text(
                             tag,
                             style: TextStyle(
-                              color: colorScheme.onPrimary,
+                              color: colorScheme.onTertiary,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),

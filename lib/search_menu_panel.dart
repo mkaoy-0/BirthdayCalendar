@@ -225,7 +225,7 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                                       children: [
                                         Icon(
                                           Icons.label,
-                                          color: widget.colorScheme.onPrimary,
+                                          color: widget.colorScheme.onPrimaryContainer.withValues(alpha: 0.75),
                                           size: 18,
                                         ),
                                         const SizedBox(width: 8),
@@ -234,7 +234,8 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                                             result['text'] ?? '',
                                             style: TextStyle(
                                               color:
-                                                  widget.colorScheme.onPrimary,
+                                                  widget.colorScheme
+                                                      .onPrimaryContainer,
                                               fontFamily: 'Georgia',
                                               fontSize: searchResultFontsize,
                                             ),
