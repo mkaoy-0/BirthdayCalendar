@@ -110,7 +110,7 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                       ? 'デフォルト壁紙を変更'
                       : 'デフォルト壁紙を設定',
                   style: const TextStyle(
-                    fontFamily: 'Roboto',
+                    fontFamily: 'sans-serif',
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
                   ),
@@ -168,14 +168,14 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                 controller: searchController,
                 style: TextStyle(
                   color: widget.colorScheme.onPrimary,
-                  fontFamily: 'OpenSans',
+                  fontFamily: 'sans-serif',
                   fontSize: 15,
                 ),
                 decoration: InputDecoration(
                   hintText: '検索キーワードを入力',
                   hintStyle: TextStyle(
                     color: widget.colorScheme.onPrimary.withValues(alpha: 0.7),
-                    fontFamily: 'OpenSans',
+                    fontFamily: 'sans-serif',
                   ),
                   filled: true,
                   fillColor: widget.colorScheme.onPrimary.withValues(
@@ -225,7 +225,7 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                                 alpha: 0.75,
                               ),
                               fontSize: searchResultFontsize,
-                              fontFamily: 'OpenSans',
+                              fontFamily: 'sans-serif',
                             ),
                           ),
                         ),
@@ -289,7 +289,7 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                                                 color: widget
                                                     .colorScheme
                                                     .onPrimaryContainer,
-                                                fontFamily: 'Georgia',
+                                                fontFamily: 'san-serif',
                                                 fontSize: searchResultFontsize,
                                               ),
                                               softWrap: true,
@@ -308,7 +308,7 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                                                 color: widget
                                                     .colorScheme
                                                     .onPrimary,
-                                                fontFamily: 'Times New Roman',
+                                                fontFamily: 'fantasy',
                                                 fontSize:
                                                     searchResultFontsize + 2,
                                                 fontWeight: FontWeight.bold,
@@ -322,7 +322,7 @@ class _MenuSearchPanelState extends State<MenuSearchPanel> {
                                                 color: widget
                                                     .colorScheme
                                                     .onPrimary,
-                                                fontFamily: 'Georgia',
+                                                fontFamily: 'san-serif',
                                                 fontSize: searchResultFontsize,
                                               ),
                                             ),

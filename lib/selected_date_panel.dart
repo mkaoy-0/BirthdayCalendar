@@ -114,7 +114,7 @@ class SelectedDatePanel extends StatelessWidget {
                     fontSize: 22,
                     fontWeight: FontWeight.bold,
                     fontStyle: FontStyle.italic,
-                    fontFamily: 'Times New Roman',
+                    fontFamily: 'fantasy',
                     color: colorScheme.primary,
                   ),
                 ),
@@ -131,7 +131,7 @@ class SelectedDatePanel extends StatelessWidget {
                   child: TextField(
                     controller: memoController,
                     autofocus: true,
-                    style: const TextStyle(fontFamily: 'roboto', fontSize: 16),
+                    style: const TextStyle(fontFamily: 'sans-serif', fontSize: 16),
                     decoration: InputDecoration(
                       hintText: 'メモを入力',
                       isDense: true,
