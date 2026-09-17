@@ -8,7 +8,6 @@ import 'theme_service.dart'; // ThemeServiceのエラー対策
 import 'notification_service.dart';
 import 'wallpaper_service.dart';
 import 'selected_date_panel.dart';
-import 'search_menu_panel.dart';
 import 'tag_search_panel.dart';
 import 'delete_confirm_dialog.dart'; // 削除確認ダイアログのインポート
 import 'top_slide_menu.dart'; // スライド式メニューのインポート
@@ -189,6 +188,22 @@ class _WallpaperCalendarPageState extends State<WallpaperCalendarPage>
       dateTags.addAll(data.dateTags);
       defaultImagePath = data.defaultImagePath;
     });
+
+    // --- ここから起動時の自動適用処理を追加（iPhone用） ---
+    final now = DateTime.now();
+    final todayKey = '${now.month}-${now.day}';
+    final todayImagePath = selectedImages[todayKey];
+
+    // パスが空でなければ（保存データが存在するなら）、壁紙に反映を試みる
+    if (todayImagePath != null && todayImagePath.isNotEmpty) {
+      try {
+        await _wallpaper.setWallpaper(path: todayImagePath, goToHome: false);
+      } catch (error) {
+        debugPrint('起動時の壁紙自動適用に失敗しました: $error');
+      }
+    }
+    // ----------------------------------------
+
   }
 
   // デフォルト壁紙を選択してストレージに保存する関数

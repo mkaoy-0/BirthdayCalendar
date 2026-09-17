@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:dynamic_color/dynamic_color.dart';
 
 class ThemeService {
-  static const _seedColor = Colors.blue;
+  static const _seedColor = Color.fromARGB(255, 89, 161, 220);
 
   /// Androidのシステム壁紙から抽出された色を元に、アプリに最適なライトモード用のカラースキームを生成
   static ColorScheme createLightScheme(ColorScheme? dynamicColorScheme) {
