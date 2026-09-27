@@ -1,5 +1,5 @@
 本リポジトリは、ポートフォリオ掲載作品のソースコード共有用リポジトリです。
-作品の全容・デモ動画・ゲーム概要につきましては、[ポートフォリオ](https://mkaoy-portfolio.vercel.app/works/bdCalendar.html)をご覧ください。
+作品の全容・デモ動画・概要につきましては、[ポートフォリオ](https://mkaoy-portfolio.vercel.app/works/bdCalendar.html)をご覧ください。
 
 ## アプリ動作環境
 - **動作確認済み実機**: Google Pixel 7a (Android 16)
