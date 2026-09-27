@@ -132,7 +132,7 @@ class TagSearchPanel extends StatelessWidget {
                                           color: colorScheme.onSurface,
                                           fontWeight: FontWeight.bold,
                                           fontSize: 14,
-                                          fontFamily: 'Times New Roman',
+                                          fontFamily: 'fantasy',
                                           fontStyle: FontStyle.italic,
                                         ),
                                       ),
@@ -145,7 +145,7 @@ class TagSearchPanel extends StatelessWidget {
                                           color: colorScheme.onSurface
                                               .withValues(alpha: 0.9),
                                           fontSize: 12,
-                                          fontFamily: 'roboto',
+                                          fontFamily: 'sans-serif',
                                           fontWeight: FontWeight.w400,
                                         ),
                                       ),
@@ -171,7 +171,7 @@ class TagSearchPanel extends StatelessWidget {
                       child: const Text(
                         '閉じる',
                         style: TextStyle(
-                          fontFamily: 'roboto',
+                          fontFamily: 'sans-serif',
                         ),
                       ),
                     ),

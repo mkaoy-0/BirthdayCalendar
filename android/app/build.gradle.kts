@@ -50,7 +50,7 @@ flutter {
 }
 
 dependencies {
-    // 💡 Java 8互換機能（Desugaring）の本体をKotlin形式の文法で追加
+    // Java 8互換機能（Desugaring）の本体をKotlin形式の文法で追加
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
     implementation("androidx.work:work-runtime-ktx:2.10.1")
 }

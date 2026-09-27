@@ -9,13 +9,26 @@ class NotificationService {
   static final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
 
-  /// 初期設定
+  /// 初期設定（Android & iOS対応）
   static Future<void> init({bool requestPermission = true}) async {
+    // Android用の初期設定
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    const InitializationSettings initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);
+    // iOS（Darwin）用の初期設定
+    final DarwinInitializationSettings initializationSettingsIOS =
+        DarwinInitializationSettings(
+      requestAlertPermission: false, // 後から個別にリクエストするため一旦false
+      requestBadgePermission: false,
+      requestSoundPermission: false,
+    );
+
+    // 両方のプラットフォームの設定をまとめる
+    final InitializationSettings initializationSettings =
+        InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsIOS,
+    );
 
     WidgetsFlutterBinding.ensureInitialized();
 
@@ -24,36 +37,51 @@ class NotificationService {
     tz.initializeTimeZones();
     tz.setLocalLocation(tz.getLocation('Asia/Tokyo'));
 
-    // Android システムに通知チャンネルを作成・登録する処理を追加
+    // --- Android固有の設定・権限リクエスト ---
     if (Platform.isAndroid) {
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
-        'daily_memo_channel', // AndroidNotificationDetails で使っているIDと同じにする
-        '誕生日通知', // 設定画面に表示される名前
+        'daily_memo_channel',
+        '誕生日通知',
         description: '今日誕生日の子を通知します',
         importance: Importance.max,
       );
 
       final androidImplementation = _notificationsPlugin
           .resolvePlatformSpecificImplementation<
-            AndroidFlutterLocalNotificationsPlugin
+              AndroidFlutterLocalNotificationsPlugin
           >();
 
-      // チャンネルを OS に登録（これで設定画面に「誕生日通知」というカテゴリが出現します）
       await androidImplementation?.createNotificationChannel(channel);
 
       if (requestPermission) {
         final bool? grantedNotificationPermission = await androidImplementation
             ?.requestNotificationsPermission();
         if (grantedNotificationPermission != true) {
-          debugPrint('通知権限が付与されませんでした。通知が届かない可能性があります。');
+          debugPrint('Androidの通知権限が付与されませんでした。');
         }
-        // アラームとリマインダーの許可
         await androidImplementation?.requestExactAlarmsPermission();
+      }
+    }
+
+    // --- iOS固有の権限リクエスト ---
+    if (Platform.isIOS && requestPermission) {
+      final iosImplementation = _notificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin
+          >();
+      
+      final bool? grantedIOSPermission = await iosImplementation?.requestPermissions(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
+      if (grantedIOSPermission != true) {
+        debugPrint('iOSの通知権限が付与されませんでした。');
       }
     }
   }
 
-  /// 時間指定関数
+  /// 時間指定関数（Android & iOS対応）
   static Future<void> scheduleDailyNotification(
     String memoTitle,
     String memoText,
@@ -66,7 +94,7 @@ class NotificationService {
       0,
       memoTitle,
       memoText,
-      scheduledDate, // 計算した時間を渡す
+      scheduledDate,
       const NotificationDetails(
         android: AndroidNotificationDetails(
           'daily_memo_channel',
@@ -74,6 +102,12 @@ class NotificationService {
           channelDescription: '今日誕生日の子を通知します',
           importance: Importance.max,
           priority: Priority.high,
+        ),
+        // iOS用の通知詳細設定を追加
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
         ),
       ),
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
@@ -86,7 +120,6 @@ class NotificationService {
   static tz.TZDateTime _nextInstanceOfTime(int hour, int minute) {
     final tz.TZDateTime now = tz.TZDateTime.now(tz.local);
 
-    // 指定された「時」「分」で時間オブジェクトを作成
     tz.TZDateTime scheduledDate = tz.TZDateTime(
       tz.local,
       now.year,
@@ -96,7 +129,6 @@ class NotificationService {
       minute,
     );
 
-    // もし計算した時間が「今の瞬間」よりも前（過去）なら、明日のその時間にセットする
     if (scheduledDate.isBefore(now)) {
       scheduledDate = scheduledDate.add(const Duration(days: 1));
     }
@@ -104,20 +136,30 @@ class NotificationService {
     return scheduledDate;
   }
 
-  /// 即時通知用
+  /// 即時通知（Android & iOS対応）
   static Future<void> showMemoNotification(String memoText) async {
     const AndroidNotificationDetails androidDetails =
         AndroidNotificationDetails(
-          'daily_memo_channel',
-          '毎日のメモ通知',
-          importance: Importance.max,
-          priority: Priority.high,
-        );
+      'daily_memo_channel',
+      '毎日のメモ通知',
+      importance: Importance.max,
+      priority: Priority.high,
+    );
+
+    const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
     await _notificationsPlugin.show(
       1,
       null,
       memoText,
-      const NotificationDetails(android: androidDetails),
+      const NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      ),
     );
   }
 }

@@ -136,7 +136,7 @@ class CalendarView extends StatelessWidget {
                             style: TextStyle(
                               fontSize: isSelected ? 19 : 13,
                               fontStyle: FontStyle.italic,
-                              fontFamily: 'Times New Roman',
+                              fontFamily: 'fantasy',
                               color: hasImage
                                   ? Colors.white
                                   : colorScheme.onSurface,
