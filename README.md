@@ -1,17 +1,10 @@
-# birthday_wallpaper
+本リポジトリは、ポートフォリオ掲載作品のソースコード共有用リポジトリです。
+作品の全容・デモ動画・ゲーム概要につきましては、[ポートフォリオ](https://mkaoy-portfolio.vercel.app/works/bdCalendar.html)をご覧ください。
 
-A new Flutter project.
+## アプリ動作環境
+- **動作確認済み実機**: Google Pixel 7a (Android 16)
+- アプリのダウンロード方法については、ポートフォリオをご参照ください
 
-## Getting Started
-
-This project is a starting point for a Flutter application.
-
-A few resources to get you started if this is your first Flutter project:
-
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 開発環境
+- **Flutter**: 3.44.0
+- **Dart**: 3.12.0
